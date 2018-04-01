@@ -1,38 +1,34 @@
-use nalgebra::Point3 as Point;
-use nalgebra::Vector3 as Vector;
-use std::cmp::Ordering;
+use nalgebra::{Point3, Vector3};
 use hitable::{HitPoint, Hitable};
+use std::cmp::Ordering;
 use ray::Ray;
 use rand::{thread_rng, Rng};
 
 #[derive(Debug)]
 pub struct Sphere {
-    center: Point<f32>,
-    radius: f32,
+    center: Point3<f64>,
+    radius: f64,
 }
 
 impl Sphere {
-    pub fn new(center: &Point<f32>, radius: f32) -> Sphere {
-        Sphere {
-            center: center.clone(),
-            radius,
-        }
+    pub fn new(center: Point3<f64>, radius: f64) -> Sphere {
+        Sphere { center, radius }
     }
 
-    pub fn center(&self) -> &Point<f32> {
+    pub fn center(&self) -> &Point3<f64> {
         &self.center
     }
 
-    pub fn radius(&self) -> f32 {
+    pub fn radius(&self) -> f64 {
         self.radius
     }
 
-    pub fn random_point_in_unit_sphere() -> Vector<f32> {
+    pub fn random_point_in_unit_sphere() -> Vector3<f64> {
         let mut rng = thread_rng();
         (0..)
             .into_iter()
             .map(|_| {
-                Vector::new(
+                Vector3::new(
                     rng.gen_range(-1.0, 1.0),
                     rng.gen_range(-1.0, 1.0),
                     rng.gen_range(-1.0, 1.0),
@@ -46,7 +42,7 @@ impl Sphere {
 }
 
 impl Hitable for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f32, tmax: f32) -> Option<HitPoint> {
+    fn hit(&self, ray: &Ray, t_min: f64, tmax: f64) -> Option<HitPoint> {
         let oc = ray.origin() - self.center();
 
         let a = ray.direction().dot(&ray.direction());
