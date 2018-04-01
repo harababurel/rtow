@@ -1,0 +1,10 @@
+[package]
+name = "rtow"
+version = "0.1.0"
+authors = ["Sergiu Puscas <srg.pscs@gmail.com>"]
+
+[dependencies]
+clippy = { version = "*", optional = true }
+nalgebra = "0.14.1"
+rand = "*"
+
