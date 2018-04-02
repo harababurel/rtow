@@ -13,42 +13,44 @@ mod hitable;
 mod camera;
 mod config;
 
+pub use config::{Configuration, Resolution};
 use pbr::ProgressBar;
 use nalgebra::{Point3, Vector3};
 use rand::{thread_rng, Rng};
 use sphere::Sphere;
 use camera::Camera;
-pub use config::{Configuration, Resolution};
 use std::fs::File;
+use std::time::Duration;
 use image::Pixel;
 
 pub fn run(cfg: &Configuration) {
     // Fail early in case of I/O errors.
     let ref mut fout = File::create(&cfg.output_filename).unwrap();
 
+    // Snowman
     let world = vec![
-        Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5),
-        Sphere::new(Point3::new(-0.75, -0.4, -1.0), 0.2),
-        Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0),
+        Sphere::new(Point3::new(0.0, -0.2, -1.0), 0.3), // lower body
+        Sphere::new(Point3::new(0.0, 0.24, -1.0), 0.2), // upper body
+        Sphere::new(Point3::new(0.0, 0.52, -0.9), 0.12), // head
+        Sphere::new(Point3::new(-0.04, 0.53, -0.80), 0.03), // left eye
+        Sphere::new(Point3::new(0.04, 0.53, -0.80), 0.03), // right eye
+        Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0), // ground
     ];
 
     let camera = Camera {
-        origin: Point3::new(0.0, 0.0, 0.0),
+        origin: Point3::new(0.0, 0.1, 0.0),
         lower_left_corner: Vector3::new(-2.0, -1.0, -1.0),
         horizontal: Vector3::new(4.0, 0.0, 0.0),
         vertical: Vector3::new(0.0, 2.0, 0.0),
     };
 
     let res = &cfg.resolution;
-    let count = res.width * res.height;
-    let mut progress_bar = ProgressBar::new(count as u64);
+    let mut progress_bar = ProgressBar::new((res.width * res.height) as u64);
+    progress_bar.set_max_refresh_rate(Some(Duration::from_millis(50)));
     let mut rng = thread_rng();
-
-    // println!("P3\n{} {}\n255\n", res.width, res.height);
-
     let mut img_buf = image::ImageBuffer::new(res.width, res.height);
 
-    for y in (0..res.height) {
+    for y in 0..res.height {
         for x in 0..res.width {
             let mut pixel: Vector3<f64> = (0..cfg.n_samples)
                 .into_iter()
@@ -66,14 +68,14 @@ pub fn run(cfg: &Configuration) {
             pixel.z = pixel.z.sqrt();
             pixel *= 255.99;
 
-            // println!("{} {} {}", pixel.x as u8, pixel.y as u8, pixel.z as u8);
-            let some_pixel =
-                image::Rgb::from_channels(pixel.x as u8, pixel.y as u8, pixel.z as u8, 255);
-            img_buf.put_pixel(x, res.height - y - 1, some_pixel);
+            img_buf.put_pixel(
+                x,
+                res.height - y - 1,
+                image::Rgb::from_channels(pixel.x as u8, pixel.y as u8, pixel.z as u8, 255),
+            );
             progress_bar.inc();
         }
     }
     image::ImageRgb8(img_buf).save(fout, image::PNG).unwrap();
-
-    progress_bar.finish_print("Done");
+    progress_bar.finish_print("Done!");
 }
