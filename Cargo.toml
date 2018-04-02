@@ -5,6 +5,9 @@ authors = ["Sergiu Puscas <srg.pscs@gmail.com>"]
 
 [dependencies]
 clippy = { version = "*", optional = true }
+clap = { version = "*", features = ["yaml"]}
 nalgebra = "0.14.1"
 rand = "*"
-
+pbr = "*"
+regex = "*"
+image = "0.18.0"

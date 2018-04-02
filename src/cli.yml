@@ -1,0 +1,26 @@
+name: rtow
+version: "0.1.0"
+author: Sergiu Puscas <srg.pscs@gmail.com>
+about: Rust implementation of Ray Tracing in One Weekend by Peter Shirley.
+args:
+  - resolution:
+      short: r
+      long: resolution
+      value_name: WIDTHxHEIGHT
+      help: e.g. 800x400
+      takes_value: true
+      required: true
+  - samples:
+      short: s
+      long: samples
+      value_name: N
+      help: e.g. 100
+      takes_value: true
+      required: true
+  - output:
+      short: o
+      long: output
+      value_name: FILENAME
+      help: e.g. sample.png
+      takes_value: true
+      required: true
