@@ -1,4 +1,5 @@
 use ray::Ray;
+use material::Material;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
@@ -6,6 +7,7 @@ pub struct HitPoint {
     pub t: f64,
     pub p: Point3<f64>,
     pub normal: Vector3<f64>,
+    pub material: Material,
 }
 
 pub trait Hitable {

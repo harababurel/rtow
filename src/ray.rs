@@ -1,7 +1,8 @@
 use nalgebra::{Point3, Vector3};
 use hitable::Hitable;
-use sphere::Sphere;
+use material::Scatterable;
 use std::f64;
+use vec_util;
 
 #[derive(Debug)]
 pub struct Ray {
@@ -26,14 +27,28 @@ impl Ray {
         &self.origin + t * &self.direction
     }
 
-    pub fn color(&self, world: &Hitable) -> Vector3<f64> {
+    pub fn color(&self, world: &Hitable, depth: i32) -> Vector3<f64> {
         match world.hit(self, 0.001, f64::INFINITY) {
             Some(hitpoint) => {
-                let target = hitpoint.normal + Sphere::random_point_in_unit_sphere();
-                0.5 * Ray::new(hitpoint.p, target).color(world)
+                if depth > 50 {
+                    return Vector3::new(0.0, 0.0, 0.0);
+                }
+
+                match hitpoint.material.scatter(self, &hitpoint) {
+                    Some((scattered_ray, attenuation)) => {
+                        let color = scattered_ray.color(world, depth + 1);
+
+                        Vector3::new(
+                            attenuation.x * color.x,
+                            attenuation.y * color.y,
+                            attenuation.z * color.z,
+                        )
+                    }
+                    None => Vector3::new(0.0, 0.0, 0.0),
+                }
             }
             None => {
-                let unit_direction = unit_vector(&self.direction());
+                let unit_direction = vec_util::unit(&self.direction());
                 let t = 0.5 * (unit_direction.y + 1.0);
 
                 let white = Vector3::new(1.0, 1.0, 1.0);
@@ -42,12 +57,4 @@ impl Ray {
             }
         }
     }
-}
-
-fn unit_vector(v: &Vector3<f64>) -> Vector3<f64> {
-    v.clone() / vector_length(&v)
-}
-
-fn vector_length(v: &Vector3<f64>) -> f64 {
-    v.dot(&v).sqrt()
 }

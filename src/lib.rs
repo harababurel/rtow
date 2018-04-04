@@ -12,6 +12,8 @@ mod sphere;
 mod hitable;
 mod camera;
 mod config;
+mod material;
+mod vec_util;
 
 pub use config::{Configuration, Resolution};
 use pbr::ProgressBar;
@@ -22,19 +24,47 @@ use camera::Camera;
 use std::fs::File;
 use std::time::Duration;
 use image::Pixel;
+use material::Material;
 
 pub fn run(cfg: &Configuration) {
     // Fail early in case of I/O errors.
     let ref mut fout = File::create(&cfg.output_filename).unwrap();
 
+    // let metal = Material::Metal(Vector3::new(0.6, 0.5, 0.2), 1.0);
+    // let matte = Material::Lambertian(Vector3::new(0.5, 0.5, 0.5));
+
     // Snowman
+    // let world = vec![
+    //     Sphere::new(Point3::new(0.0, -0.2, -1.0), 0.3, metal.clone()), // lower body
+    //     Sphere::new(Point3::new(0.0, 0.24, -1.0), 0.2, metal.clone()), // upper body
+    //     Sphere::new(Point3::new(0.0, 0.52, -0.9), 0.12, metal.clone()), // head
+    //     Sphere::new(Point3::new(-0.04, 0.53, -0.80), 0.03, metal.clone()), // left eye
+    //     Sphere::new(Point3::new(0.04, 0.53, -0.80), 0.03, metal.clone()), // right eye
+    //     Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, matte.clone()), // ground
+    // ];
+
     let world = vec![
-        Sphere::new(Point3::new(0.0, -0.2, -1.0), 0.3), // lower body
-        Sphere::new(Point3::new(0.0, 0.24, -1.0), 0.2), // upper body
-        Sphere::new(Point3::new(0.0, 0.52, -0.9), 0.12), // head
-        Sphere::new(Point3::new(-0.04, 0.53, -0.80), 0.03), // left eye
-        Sphere::new(Point3::new(0.04, 0.53, -0.80), 0.03), // right eye
-        Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0), // ground
+        Sphere::new(
+            Point3::new(0.0, 0.0, -1.0),
+            0.5,
+            Material::Lambertian(Vector3::new(0.1, 0.2, 0.5)),
+        ),
+        Sphere::new(
+            Point3::new(0.0, -100.5, -1.0),
+            100.0,
+            Material::Lambertian(Vector3::new(0.8, 0.8, 0.0)),
+        ),
+        Sphere::new(
+            Point3::new(1.0, 0.0, -1.0),
+            0.5,
+            Material::Metal(Vector3::new(0.8, 0.6, 0.2), 0.0),
+        ),
+        Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, Material::Dielectric(1.5)),
+        Sphere::new(
+            Point3::new(-1.0, 0.0, -1.0),
+            -0.45,
+            Material::Dielectric(1.5),
+        ),
     ];
 
     let camera = Camera {
@@ -58,7 +88,7 @@ pub fn run(cfg: &Configuration) {
                     let u = (x as f64 + rng.gen::<f64>()) / res.width as f64;
                     let v = (y as f64 + rng.gen::<f64>()) / res.height as f64;
 
-                    camera.get_ray(u, v).color(&world)
+                    camera.get_ray(u, v).color(&world, 0)
                 })
                 .sum();
 

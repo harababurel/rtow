@@ -2,17 +2,23 @@ use nalgebra::{Point3, Vector3};
 use hitable::{HitPoint, Hitable};
 use std::cmp::Ordering;
 use ray::Ray;
+use material::Material;
 use rand::{thread_rng, Rng};
 
 #[derive(Debug)]
 pub struct Sphere {
     center: Point3<f64>,
     radius: f64,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: Point3<f64>, radius: f64) -> Sphere {
-        Sphere { center, radius }
+    pub fn new(center: Point3<f64>, radius: f64, material: Material) -> Sphere {
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 
     pub fn center(&self) -> &Point3<f64> {
@@ -57,7 +63,12 @@ impl Hitable for Sphere {
                     if t_min < t && t < tmax {
                         let p = ray.point_at_parameter(t);
                         let normal = (p - self.center()) / self.radius();
-                        return Some(HitPoint { t, p, normal });
+                        return Some(HitPoint {
+                            t,
+                            p,
+                            normal,
+                            material: self.material.clone(),
+                        });
                     }
                 }
                 None
