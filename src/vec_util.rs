@@ -32,7 +32,6 @@ pub fn refraction(
 }
 
 pub fn schlick(cosine: f64, refractive_index: f64) -> f64 {
-    let r0 = ((1.0 - refractive_index) / (1.0 + refractive_index)).powf(2.0);
-
-    r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
+    let r = ((1.0 - refractive_index) / (1.0 + refractive_index)).powf(2.0);
+    r + (1.0 - r) * (1.0 - cosine).powf(5.0)
 }
