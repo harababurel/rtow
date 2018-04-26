@@ -1,6 +1,3 @@
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
-
 extern crate image;
 extern crate nalgebra;
 extern crate pbr;
@@ -8,13 +5,13 @@ extern crate rand;
 extern crate rayon;
 extern crate regex;
 
-mod ray;
-mod sphere;
-mod hitable;
-mod camera;
-mod config;
-mod material;
-mod vec_util;
+pub mod ray;
+pub mod sphere;
+pub mod hitable;
+pub mod camera;
+pub mod config;
+pub mod material;
+pub mod vec_util;
 
 pub use config::{Configuration, Resolution};
 use pbr::{MultiBar, ProgressBar};
@@ -23,11 +20,13 @@ use rand::{thread_rng, Rng};
 use sphere::Sphere;
 use camera::Camera;
 use std::fs::File;
-use std::time::Duration;
 use image::{GenericImage, Rgba};
+use std::f64;
 use material::Material;
 use rayon::prelude::*;
 
+/// Entry point for the application. Generates a hardcoded world, simulates the ray tracing and
+/// finally saves the rendered frame to disk, as specified by the `Configuration`.
 pub fn run(cfg: &Configuration) {
     // Fail early in case of I/O errors.
     let ref mut fout = File::create(&cfg.output_filename).unwrap();
@@ -69,12 +68,22 @@ pub fn run(cfg: &Configuration) {
         ),
     ];
 
-    let camera = Camera {
-        origin: Point3::new(0.0, 0.1, 0.0),
-        lower_left_corner: Vector3::new(-2.0, -1.0, -1.0),
-        horizontal: Vector3::new(4.0, 0.0, 0.0),
-        vertical: Vector3::new(0.0, 2.0, 0.0),
-    };
+    // let r = f64::consts::FRAC_PI_4.cos();
+    // let world = vec![
+    //     Sphere::new(
+    //         Point3::new(-r, 0.0, -1.0),
+    //         r,
+    //         Material::Lambertian(Vector3::new(0.0, 0.0, 1.0)),
+    //     ),
+    //     Sphere::new(
+    //         Point3::new(r, 0.0, -1.0),
+    //         r,
+    //         Material::Lambertian(Vector3::new(1.0, 0.0, 0.0)),
+    //     ),
+    // ];
+
+    let aspect_ratio = cfg.resolution.width as f64 / cfg.resolution.height as f64;
+    let camera = Camera::new(90.0, aspect_ratio);
 
     // let mut mb = MultiBar::new();
     // let count = (res.width * res.height) as u64;

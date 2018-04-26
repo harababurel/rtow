@@ -6,22 +6,43 @@ use nalgebra::Vector3;
 use vec_util;
 use std::cmp::Ordering;
 
-type Attenuation = Vector3<f64>;
-type Fuzziness = f64;
-type RefractiveIndex = f64;
+/// Percentage of each RGB color that persists after a ray gets scattered.
+pub type Attenuation = Vector3<f64>;
+
+/// `0.0` for smooth and shiny; `1.0` for fuzzy.
+pub type Fuzziness = f64;
+
+/// [Refractive index](https://en.wikipedia.org/wiki/Refractive_index)
+pub type RefractiveIndex = f64;
 
 #[derive(Debug, Clone)]
 pub enum Material {
+    /// Matte.
     Lambertian(Attenuation),
+    /// Metal.
     Metal(Attenuation, Fuzziness),
+    /// i.e. glass.
     Dielectric(RefractiveIndex),
 }
 
+/// A `Scatterable` scatters the light rays that hit it.
 pub trait Scatterable {
+    /// Returns the new `Ray` (if any) and its `Attenuation` which results from a given `Ray` hitting a `Scatterable` object.
+    /// The new ray usually describes a physical phenomenon (reflection, refraction or absorption).
     fn scatter(&self, ray: &Ray, hitpoint: &HitPoint) -> Option<(Ray, Attenuation)>;
 }
 
 impl Scatterable for Material {
+    /// Different materials scatter in different ways:
+    ///
+    /// * A `Lambertian` (matte) object reflects the ray along the direction of the normal vector,
+    /// which is slightly altered by adding a random delta.
+    /// * A `Metal` reflects the ray along a direction which is [symmetrical to the normal
+    /// vector](https://upload.wikimedia.org/wikipedia/commons/1/10/Reflection_angles.svg).
+    /// Depending on the fuzziness of the metal, a random delta may be added to this direction.
+    /// * A `Dielectric` (i.e. glass) material can either reflect or refract the ray. The
+    /// probability of each event depends on multiple factors, such as the refractive index and the
+    /// angle of incidence. This probability is roughly approximated by the `schlick` polynomial.
     fn scatter(&self, ray: &Ray, hitpoint: &HitPoint) -> Option<(Ray, Attenuation)> {
         match self {
             &Material::Lambertian(attenuation) => {

@@ -5,6 +5,7 @@ use ray::Ray;
 use material::Material;
 use rand::{thread_rng, Rng};
 
+/// A 3D sphere.
 #[derive(Debug)]
 pub struct Sphere {
     center: Point3<f64>,
@@ -29,6 +30,10 @@ impl Sphere {
         self.radius
     }
 
+    /// Returns a random 3D Point situated inside a sphere of radius 1, located in the origin.
+    /// The point is obtained by sequentially generating points in the unit square and selecting
+    /// the first one that happens to also be inside the unit sphere. Approximately 52.35% chance of
+    /// getting a valid point on each trial.
     pub fn random_point_in_unit_sphere() -> Vector3<f64> {
         let mut rng = thread_rng();
         (0..)
@@ -48,6 +53,8 @@ impl Sphere {
 }
 
 impl Hitable for Sphere {
+    /// There can be 0, 1 or 2 hitpoints for a given ray and a sphere. If there is more than
+    /// one hitpoint, the closest one (smallest `t`) is chosen.
     fn hit(&self, ray: &Ray, t_min: f64, tmax: f64) -> Option<HitPoint> {
         let oc = ray.origin() - self.center();
 
