@@ -6,7 +6,7 @@ authors = ["Sergiu Puscas <srg.pscs@gmail.com>"]
 license = "MIT"
 
 [dependencies]
-clap = { version = "2.31.2" features = ["yaml"]}
+clap = { version = "2.31.2", features = ["yaml"]}
 chan = "0.1.21"
 image = "0.18.0"
 nalgebra = "0.14.1"
