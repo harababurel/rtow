@@ -24,3 +24,9 @@ args:
       help: e.g. sample.png
       takes_value: true
       required: true
+  - threads:
+      short: t
+      long: threads
+      value_name: T
+      takes_value: true
+      required: true

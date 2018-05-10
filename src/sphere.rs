@@ -6,7 +6,7 @@ use material::Material;
 use rand::{thread_rng, Rng};
 
 /// A 3D sphere.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Sphere {
     center: Point3<f64>,
     radius: f64,

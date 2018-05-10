@@ -7,6 +7,7 @@ use std::f64::consts;
 /// and one vertical).
 ///
 // /// The sensor is split into a grid of pixels.
+#[derive(Copy, Clone)]
 pub struct Camera {
     origin: Point3<f64>,
     lower_left_corner: Vector3<f64>,

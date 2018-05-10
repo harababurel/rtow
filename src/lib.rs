@@ -1,8 +1,8 @@
+extern crate chan;
 extern crate image;
 extern crate nalgebra;
 extern crate pbr;
 extern crate rand;
-extern crate rayon;
 extern crate regex;
 
 pub mod ray;
@@ -14,20 +14,20 @@ pub mod material;
 pub mod vec_util;
 
 pub use config::{Configuration, Resolution};
-use pbr::{MultiBar, ProgressBar};
+use camera::Camera;
+use image::{GenericImage, Rgba};
+use material::Material;
 use nalgebra::{Point3, Vector3};
+// use pbr::{MultiBar, ProgressBar};
 use rand::{thread_rng, Rng};
 use sphere::Sphere;
-use camera::Camera;
-use std::fs::File;
-use image::{GenericImage, Rgba};
 use std::f64;
-use material::Material;
-use rayon::prelude::*;
+use std::fs::File;
+use std::thread;
 
 /// Entry point for the application. Generates a hardcoded world, simulates the ray tracing and
 /// finally saves the rendered frame to disk, as specified by the `Configuration`.
-pub fn run(cfg: &Configuration) {
+pub fn run(cfg: Configuration) {
     // Fail early in case of I/O errors.
     let ref mut fout = File::create(&cfg.output_filename).unwrap();
 
@@ -85,45 +85,72 @@ pub fn run(cfg: &Configuration) {
     let aspect_ratio = cfg.resolution.width as f64 / cfg.resolution.height as f64;
     let camera = Camera::new(90.0, aspect_ratio);
 
-    // let mut mb = MultiBar::new();
-    // let count = (res.width * res.height) as u64;
-    // let mut progress_bar = ProgressBar::new((res.width * res.height) as u64);
-    // progress_bar.set_max_refresh_rate(Some(Duration::from_millis(50)));
+    let r = {
+        let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();
+
+        let cfg = cfg.clone();
+        thread::spawn(move || {
+            image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height)
+                .pixels()
+                .into_iter()
+                .for_each(|pixel| {
+                    // println!("sending pixel");
+                    s.send(pixel)
+                });
+        });
+        r
+    };
+
+    let (ret_s, ret_r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();
+    let wg = chan::WaitGroup::new();
+
+    for _ in 0..cfg.n_threads {
+        wg.add(1);
+        let wg = wg.clone();
+        let r = r.clone();
+
+        let cfg = cfg.clone();
+        let world = world.clone();
+        let ret_s = ret_s.clone();
+        thread::spawn(move || {
+            for pixel in r {
+                // println!("Received pixel: {:?}", pixel);
+
+                let mut color: Vector3<f64> = (0..cfg.n_samples)
+                    .into_iter()
+                    .map(|_| {
+                        let mut rng = thread_rng();
+                        let u = (pixel.0 as f64 + rng.gen::<f64>()) / cfg.resolution.width as f64;
+                        let v = (pixel.1 as f64 + rng.gen::<f64>()) / cfg.resolution.height as f64;
+
+                        camera.get_ray(u, v).color(&world, 0)
+                    })
+                    .sum();
+
+                color /= cfg.n_samples as f64;
+                color.x = color.x.sqrt();
+                color.y = color.y.sqrt();
+                color.z = color.z.sqrt();
+                color *= 255.99;
+
+                let transformed_pixel = (
+                    pixel.0,
+                    cfg.resolution.height - pixel.1 - 1, // vertical axis is reversed
+                    Rgba([color.x as u8, color.y as u8, color.z as u8, 255]),
+                );
+                ret_s.send(transformed_pixel);
+            }
+            wg.done();
+        });
+    }
+    wg.wait();
+    drop(ret_s);
 
     let mut img = image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height);
-
-    let pixels: Vec<_> = img.pixels().into_iter().collect();
-    let transformed_pixels: Vec<_> = pixels
-        .into_par_iter()
-        .map(|pixel| {
-            let mut color: Vector3<f64> = (0..cfg.n_samples)
-                .into_iter()
-                .map(|_| {
-                    let mut rng = thread_rng();
-                    let u = (pixel.0 as f64 + rng.gen::<f64>()) / img.width() as f64;
-                    let v = (pixel.1 as f64 + rng.gen::<f64>()) / img.height() as f64;
-
-                    camera.get_ray(u, v).color(&world, 0)
-                })
-                .sum();
-
-            color /= cfg.n_samples as f64;
-            color.x = color.x.sqrt();
-            color.y = color.y.sqrt();
-            color.z = color.z.sqrt();
-            color *= 255.99;
-
-            (
-                pixel.0,
-                img.height() - pixel.1 - 1, // vertical axis is reversed
-                Rgba([color.x as u8, color.y as u8, color.z as u8, 255]),
-            )
-        })
-        .collect();
-
-    transformed_pixels.into_iter().for_each(|x| {
-        img.put_pixel(x.0, x.1, x.2);
-    });
+    for pixel in ret_r {
+        // println!("got transformed pixel: {:?}", pixel);
+        img.put_pixel(pixel.0, pixel.1, pixel.2);
+    }
 
     img.save(fout, image::PNG).unwrap();
     // progress_bar.finish_print("Done!");

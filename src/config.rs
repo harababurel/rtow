@@ -1,6 +1,7 @@
 use regex::Regex;
 
 /// Models the size of an image.
+#[derive(Clone)]
 pub struct Resolution {
     pub width: u32,
     pub height: u32,
@@ -13,10 +14,12 @@ pub struct Resolution {
 /// together; a high number of samples provides more accurate colors, less noise and better
 /// anti-aliasing.
 /// * `output_filename`: self explanatory
+#[derive(Clone)]
 pub struct Configuration {
     pub resolution: Resolution,
     pub n_samples: u32,
     pub output_filename: String,
+    pub n_threads: u32,
 }
 
 impl<T> From<T> for Resolution
