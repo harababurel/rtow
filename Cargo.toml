@@ -6,12 +6,10 @@ authors = ["Sergiu Puscas <srg.pscs@gmail.com>"]
 license = "MIT"
 
 [dependencies]
-clippy = { version = "*", optional = true }
-clap = { version = "*", features = ["yaml"]}
 chan = "0.1.21"
 image = "0.18.0"
 nalgebra = "0.14.1"
-pbr = "*"
-rand = "*"
-regex = "*"
+pbr = "1.0.1"
+rand = "0.4.2"
+regex = "1.0.0"
 
