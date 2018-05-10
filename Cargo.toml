@@ -1,7 +1,9 @@
 [package]
 name = "rtow"
+description = "Implementation of the Ray Tracing in One Weekend project"
 version = "0.1.0"
 authors = ["Sergiu Puscas <srg.pscs@gmail.com>"]
+license = "MIT"
 
 [dependencies]
 clippy = { version = "*", optional = true }
