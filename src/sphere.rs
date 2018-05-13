@@ -1,9 +1,9 @@
-use nalgebra::{Point3, Vector3};
 use hitable::{HitPoint, Hitable};
-use std::cmp::Ordering;
-use ray::Ray;
 use material::Material;
+use nalgebra::{Point3, Vector3};
 use rand::{thread_rng, Rng};
+use ray::Ray;
+use std::cmp::Ordering;
 
 /// A 3D sphere.
 #[derive(Clone, Debug)]

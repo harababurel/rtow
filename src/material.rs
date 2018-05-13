@@ -1,10 +1,10 @@
-use ray::Ray;
-use rand::{thread_rng, Rng};
-use sphere::Sphere;
 use hitable::HitPoint;
 use nalgebra::Vector3;
-use vec_util;
+use rand::{thread_rng, Rng};
+use ray::Ray;
+use sphere::Sphere;
 use std::cmp::Ordering;
+use vec_util;
 
 /// Percentage of each RGB color that persists after a ray gets scattered.
 pub type Attenuation = Vector3<f64>;

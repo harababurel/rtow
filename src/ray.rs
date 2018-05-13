@@ -1,6 +1,6 @@
-use nalgebra::{Point3, Vector3};
 use hitable::Hitable;
 use material::Scatterable;
+use nalgebra::{Point3, Vector3};
 use std::f64;
 use vec_util;
 

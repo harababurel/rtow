@@ -4,21 +4,24 @@ extern crate nalgebra;
 extern crate pbr;
 extern crate rand;
 extern crate regex;
+#[macro_use]
+extern crate log;
+extern crate pretty_env_logger;
 
-pub mod ray;
-pub mod sphere;
-pub mod hitable;
 pub mod camera;
 pub mod config;
+pub mod hitable;
 pub mod material;
+pub mod ray;
+pub mod sphere;
 pub mod vec_util;
 
-pub use config::{Configuration, Resolution};
 use camera::Camera;
+pub use config::{Configuration, Resolution};
 use image::{GenericImage, Rgba};
 use material::Material;
 use nalgebra::{Point3, Vector3};
-// use pbr::{MultiBar, ProgressBar};
+use pbr::{MultiBar, ProgressBar};
 use rand::{thread_rng, Rng};
 use sphere::Sphere;
 use std::f64;
@@ -147,11 +150,12 @@ pub fn run(cfg: Configuration) {
     drop(ret_s);
 
     let mut img = image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height);
+    let mut pb = ProgressBar::new((cfg.resolution.width * cfg.resolution.height).into());
     for pixel in ret_r {
-        // println!("got transformed pixel: {:?}", pixel);
         img.put_pixel(pixel.0, pixel.1, pixel.2);
+        pb.inc();
     }
 
     img.save(fout, image::PNG).unwrap();
-    // progress_bar.finish_print("Done!");
+    pb.finish_print("Done!");
 }
