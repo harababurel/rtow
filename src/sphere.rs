@@ -50,6 +50,17 @@ impl Sphere {
             .next()
             .unwrap()
     }
+
+    pub fn random_point_in_unit_disk() -> Vector3<f64> {
+        let mut rng = thread_rng();
+        (0..)
+            .into_iter()
+            .map(|_| Vector3::new(rng.gen_range(-1.0, 1.0), rng.gen_range(-1.0, 1.0), 0.0))
+            .filter(|point| point.dot(&point) < 1.0)
+            .take(1)
+            .next()
+            .unwrap()
+    }
 }
 
 impl Hitable for Sphere {

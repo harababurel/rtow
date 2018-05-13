@@ -15,7 +15,7 @@ pub type Fuzziness = f64;
 /// [Refractive index](https://en.wikipedia.org/wiki/Refractive_index)
 pub type RefractiveIndex = f64;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Material {
     /// Matte.
     Lambertian(Attenuation),

@@ -33,14 +33,14 @@ impl Ray {
         &self.origin + t * &self.direction
     }
 
-    /// Traces the ray backwards and computes its color. It simulates at most 50 hit points with
+    /// Traces the ray backwards and computes its color. It simulates at most 10 hit points with
     /// the elements of the world. For each hit point, it continues the simulation using the scattered ray instead of the original one. Depending on the attenuation of the materials which are hit, each consecutive ray loses some color intensity. When no additional object is hit, the world background (a vertical gradient from cyan to white) is used for the color.
     /// Note: when computing hitpoints, `t_min = 0.001` is used in order to prevent [shadow
     /// acne](https://computergraphics.stackexchange.com/questions/2192/cause-of-shadow-acne).
     pub fn color(&self, world: &Hitable, depth: i32) -> Vector3<f64> {
         match world.hit(self, 0.001, f64::INFINITY) {
             Some(hitpoint) => {
-                if depth > 50 {
+                if depth > 10 {
                     return Vector3::new(0.0, 0.0, 0.0);
                 }
 

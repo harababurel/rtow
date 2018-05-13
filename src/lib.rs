@@ -15,8 +15,9 @@ pub mod ray;
 pub mod sphere;
 pub mod vec_util;
 
-use camera::{Camera, Orientation};
+use camera::{Camera, Lens, Orientation};
 pub use config::{Configuration, Resolution};
+use hitable::Hitable;
 use image::{GenericImage, Rgba};
 use material::Material;
 use nalgebra::{Point3, Vector3};
@@ -26,6 +27,24 @@ use sphere::Sphere;
 use std::f64;
 use std::fs::File;
 use std::thread;
+
+fn random_scene(object_count: u32) -> Vec<Sphere> {
+    let matte = Material::Lambertian(Vector3::new(0.4, 0.2, 0.1));
+    let metal = Material::Metal(Vector3::new(0.7, 0.6, 0.5), 0.0);
+    let glass = Material::Dielectric(1.5);
+
+    let ground = Sphere::new(
+        Point3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Material::Lambertian(Vector3::new(0.5, 0.5, 0.5)),
+    );
+
+    let glass_sphere = Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, glass);
+    let matte_sphere = Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, matte);
+    let metal_sphere = Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, metal);
+
+    vec![ground, glass_sphere, matte_sphere, metal_sphere]
+}
 
 /// Entry point for the application. Generates a hardcoded world, simulates the ray tracing and
 /// finally saves the rendered frame to disk, as specified by the `Configuration`.
@@ -46,29 +65,31 @@ pub fn run(cfg: Configuration) {
     //     Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, matte.clone()), // ground
     // ];
 
-    let world = vec![
-        Sphere::new(
-            Point3::new(0.0, 0.0, -1.0),
-            0.5,
-            Material::Lambertian(Vector3::new(0.1, 0.2, 0.5)),
-        ),
-        Sphere::new(
-            Point3::new(0.0, -100.5, -1.0),
-            100.0,
-            Material::Lambertian(Vector3::new(0.8, 0.8, 0.0)),
-        ),
-        Sphere::new(
-            Point3::new(1.0, 0.0, -1.0),
-            0.5,
-            Material::Metal(Vector3::new(0.8, 0.6, 0.2), 0.0),
-        ),
-        Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, Material::Dielectric(1.5)),
-        Sphere::new(
-            Point3::new(-1.0, 0.0, -1.0),
-            -0.45,
-            Material::Dielectric(1.5),
-        ),
-    ];
+    // let world = vec![
+    //     Sphere::new(
+    //         Point3::new(0.0, 0.0, -1.0),
+    //         0.5,
+    //         Material::Lambertian(Vector3::new(0.1, 0.2, 0.5)),
+    //     ),
+    //     Sphere::new(
+    //         Point3::new(0.0, -100.5, -1.0),
+    //         100.0,
+    //         Material::Lambertian(Vector3::new(0.8, 0.8, 0.0)),
+    //     ),
+    //     Sphere::new(
+    //         Point3::new(1.0, 0.0, -1.0),
+    //         0.5,
+    //         Material::Metal(Vector3::new(0.8, 0.6, 0.2), 0.0),
+    //     ),
+    //     Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, Material::Dielectric(1.5)),
+    //     Sphere::new(
+    //         Point3::new(-1.0, 0.0, -1.0),
+    //         -0.45,
+    //         Material::Dielectric(1.5),
+    //     ),
+    // ];
+    //
+    let world = random_scene(0);
 
     // let r = f64::consts::FRAC_PI_4.cos();
     // let world = vec![
@@ -85,26 +106,39 @@ pub fn run(cfg: Configuration) {
     // ];
 
     let orientation = Orientation {
-        look_from: Point3::new(-2.0, 2.0, 1.0),
+        look_from: Point3::new(7.0, 1.5, 2.0),
         look_at: Point3::new(0.0, 0.0, -1.0),
         upwards: Vector3::new(0.0, 1.0, 0.0),
     };
 
+    let lens = Lens {
+        aperture: 0.1,
+        focal_length: vec_util::length(&(orientation.look_from - orientation.look_at)),
+    };
+
     let aspect_ratio = cfg.resolution.width as f64 / cfg.resolution.height as f64;
-    let camera = Camera::new(orientation, 40.0, aspect_ratio);
+    let camera = Camera::new(orientation, lens, 70.0, aspect_ratio);
 
     let r = {
         let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();
 
         let cfg = cfg.clone();
         thread::spawn(move || {
-            image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height)
-                .pixels()
-                .into_iter()
-                .for_each(|pixel| {
-                    // println!("sending pixel");
-                    s.send(pixel)
-                });
+            let mut pixels: Vec<(u32, u32, image::Rgba<u8>)> =
+                image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height)
+                    .pixels()
+                    .into_iter()
+                    .collect();
+
+            // Some areas of the image take more time to render. This makes the progress bar
+            // advance unevenly. Shuffling the pixels leads to a more even distribution and a more
+            // accurate ETA.
+            thread_rng().shuffle(&mut pixels);
+
+            pixels.into_iter().for_each(|pixel| {
+                // println!("sending pixel");
+                s.send(pixel)
+            });
         });
         r
     };
