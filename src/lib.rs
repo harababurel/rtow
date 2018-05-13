@@ -1,12 +1,11 @@
 extern crate chan;
 extern crate image;
+extern crate log;
 extern crate nalgebra;
 extern crate pbr;
+extern crate pretty_env_logger;
 extern crate rand;
 extern crate regex;
-#[macro_use]
-extern crate log;
-extern crate pretty_env_logger;
 
 pub mod camera;
 pub mod config;
@@ -16,12 +15,12 @@ pub mod ray;
 pub mod sphere;
 pub mod vec_util;
 
-use camera::Camera;
+use camera::{Camera, Orientation};
 pub use config::{Configuration, Resolution};
 use image::{GenericImage, Rgba};
 use material::Material;
 use nalgebra::{Point3, Vector3};
-use pbr::{MultiBar, ProgressBar};
+use pbr::ProgressBar;
 use rand::{thread_rng, Rng};
 use sphere::Sphere;
 use std::f64;
@@ -85,8 +84,14 @@ pub fn run(cfg: Configuration) {
     //     ),
     // ];
 
+    let orientation = Orientation {
+        look_from: Point3::new(-2.0, 2.0, 1.0),
+        look_at: Point3::new(0.0, 0.0, -1.0),
+        upwards: Vector3::new(0.0, 1.0, 0.0),
+    };
+
     let aspect_ratio = cfg.resolution.width as f64 / cfg.resolution.height as f64;
-    let camera = Camera::new(90.0, aspect_ratio);
+    let camera = Camera::new(orientation, 40.0, aspect_ratio);
 
     let r = {
         let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();
@@ -146,7 +151,6 @@ pub fn run(cfg: Configuration) {
             wg.done();
         });
     }
-    wg.wait();
     drop(ret_s);
 
     let mut img = image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height);
@@ -156,6 +160,7 @@ pub fn run(cfg: Configuration) {
         pb.inc();
     }
 
+    wg.wait();
     img.save(fout, image::PNG).unwrap();
     pb.finish_print("Done!");
 }
