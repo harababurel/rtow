@@ -1,5 +1,5 @@
 use material::Material;
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Point3, Unit, Vector3};
 use ray::Ray;
 use std::fmt::Debug;
 
@@ -11,7 +11,7 @@ pub struct HitPoint {
     /// the actual 3D contact point.
     pub p: Point3<f64>,
     /// the normal vector on the material surface in point `p`.
-    pub normal: Vector3<f64>,
+    pub normal: Unit<Vector3<f64>>,
     /// describes material properties; useful for determining what happens to the ray
     /// after contact (is it absorbed/reflected/refracted?).
     pub material: Material,

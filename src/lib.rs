@@ -14,12 +14,13 @@ pub mod hitable;
 pub mod material;
 pub mod ray;
 pub mod sphere;
-pub mod vec_util;
+pub mod util;
 
 use camera::{Camera, Lens, Orientation};
 pub use config::{Configuration, Resolution};
 use image::{GenericImage, Rgba};
 use material::Material;
+use material::Material::{Lambertian, Metal};
 use nalgebra::{Point3, Vector3};
 use pbr::ProgressBar;
 use rand::{thread_rng, Rng};
@@ -34,7 +35,7 @@ fn random_scene(object_count: u32) -> Vec<Sphere> {
     let ground = Sphere::new(
         Point3::new(0., -EARTH_RADIUS, 0.),
         EARTH_RADIUS,
-        Material::Lambertian {
+        Lambertian {
             attenuation: Vector3::new(0.5, 0.5, 0.5),
         },
     );
@@ -42,21 +43,13 @@ fn random_scene(object_count: u32) -> Vec<Sphere> {
     let metal_sphere = Sphere::new(
         Point3::new(0., 1., -4.),
         1.,
-        Material::Metal {
+        Metal {
             attenuation: Vector3::new(0.7, 0.6, 0.5),
             fuzziness: 0.,
         },
     );
-    let glass_sphere = Sphere::new(
-        Point3::new(0., 1., -8.),
-        1.,
-        Material::random_dielectric(),
-    );
-    let matte_sphere = Sphere::new(
-        Point3::new(0., 1., -12.),
-        1.,
-        Material::random_lambertian(),
-    );
+    let glass_sphere = Sphere::new(Point3::new(0., 1., -8.), 1., Material::random_dielectric());
+    let matte_sphere = Sphere::new(Point3::new(0., 1., -12.), 1., Material::random_lambertian());
 
     let mut world = vec![ground.clone(), glass_sphere, matte_sphere, metal_sphere];
     let mut rng = thread_rng();
@@ -105,14 +98,14 @@ pub fn run(cfg: Configuration) {
         look_at: Point3::new(0., 1., -8.),
         upwards: Vector3::new(0., 1., 0.),
     };
-
     let lens = Lens {
         aperture: 0.1,
-        focal_length: vec_util::length(&(orientation.look_from - orientation.look_at)),
+        focal_length: util::length(&(orientation.look_from - orientation.look_at)),
+        vertical_fov: 50.,
+        aspect_ratio: cfg.resolution.width as f64 / cfg.resolution.height as f64,
     };
 
-    let aspect_ratio = cfg.resolution.width as f64 / cfg.resolution.height as f64;
-    let camera = Camera::new(orientation, lens, 50., aspect_ratio);
+    let camera = Camera::new(orientation, lens);
 
     let r = {
         let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();

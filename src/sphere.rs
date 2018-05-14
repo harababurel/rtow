@@ -1,10 +1,10 @@
 use hitable::{HitPoint, Hitable};
 use material::Material;
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Point3, Unit, Vector3};
 use rand::{thread_rng, Rng};
 use ray::Ray;
 use std::cmp::Ordering;
-use vec_util;
+use util;
 
 /// A 3D sphere.
 #[derive(Clone, Debug)]
@@ -76,8 +76,7 @@ impl Sphere {
     }
 
     pub fn intersects(&self, other: &Sphere) -> bool {
-        let distance_between_centers = vec_util::length(&(other.center() - self.center()));
-
+        let distance_between_centers = util::length(&(other.center() - self.center()));
         distance_between_centers <= self.radius() + other.radius()
     }
 }
@@ -103,7 +102,7 @@ impl Hitable for Sphere {
                         return Some(HitPoint {
                             t,
                             p,
-                            normal,
+                            normal: Unit::new_normalize(normal),
                             material: self.material.clone(),
                         });
                     }

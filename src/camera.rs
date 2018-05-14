@@ -1,4 +1,4 @@
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Point3, Unit, Vector3};
 use ray::Ray;
 use sphere::Sphere;
 use std::f64::consts;
@@ -15,9 +15,9 @@ pub struct Camera {
     lower_left_corner: Vector3<f64>,
     horizontal: Vector3<f64>,
     vertical: Vector3<f64>,
-    u: Vector3<f64>,
-    v: Vector3<f64>,
-    w: Vector3<f64>,
+    u: Unit<Vector3<f64>>,
+    v: Unit<Vector3<f64>>,
+    w: Unit<Vector3<f64>>,
 }
 
 pub struct Orientation {
@@ -30,15 +30,17 @@ pub struct Orientation {
 pub struct Lens {
     pub aperture: f64,
     pub focal_length: f64,
+    pub vertical_fov: f64,
+    pub aspect_ratio: f64,
 }
 
 impl Camera {
     /// Creates a new camera centered in `(0, 0, 0)`. The sensor is constructed based on the desired
     /// field of view and aspect ratio.
-    pub fn new(orientation: Orientation, lens: Lens, vert_fov: f64, aspect_ratio: f64) -> Camera {
-        let theta = vert_fov * consts::PI / 180.;
+    pub fn new(orientation: Orientation, lens: Lens) -> Camera {
+        let theta = lens.vertical_fov * consts::PI / 180.;
         let half_height = (theta / 2.).tan();
-        let half_width = aspect_ratio * half_height;
+        let half_width = lens.aspect_ratio * half_height;
 
         let w = (orientation.look_from - orientation.look_at).normalize();
         let u = orientation.upwards.cross(&w).normalize();
@@ -53,9 +55,9 @@ impl Camera {
                 .coords,
             horizontal: 2. * half_width * lens.focal_length * u,
             vertical: 2. * half_height * lens.focal_length * v,
-            u,
-            v,
-            w,
+            u: Unit::new_normalize(u),
+            v: Unit::new_normalize(v),
+            w: Unit::new_normalize(w),
         }
     }
 
@@ -68,7 +70,7 @@ impl Camera {
     pub fn get_ray(&self, u: f64, v: f64) -> Ray {
         let rd = self.lens_radius() * Sphere::random_point_in_unit_disk();
 
-        let offset = self.u * rd.x + self.v * rd.y;
+        let offset = self.u.unwrap() * rd.x + self.v.unwrap() * rd.y;
         let direction = self.lower_left_corner + u * self.horizontal + v * self.vertical
             - self.origin.coords - offset;
         Ray::new(self.origin.clone() + offset, direction)
