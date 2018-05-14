@@ -1,6 +1,6 @@
 use hitable::HitPoint;
 use nalgebra::Vector3;
-use rand::{thread_rng, Rng};
+use rand::{seq, thread_rng, Rng};
 use ray::Ray;
 use sphere::Sphere;
 use std::cmp::Ordering;
@@ -23,6 +23,49 @@ pub enum Material {
     Metal(Attenuation, Fuzziness),
     /// i.e. glass.
     Dielectric(RefractiveIndex),
+}
+
+impl Material {
+    pub fn random_lambertian() -> Material {
+        let mut rng = thread_rng();
+        Material::Lambertian(Vector3::new(
+            rng.gen_range(0.0, 1.0),
+            rng.gen_range(0.0, 1.0),
+            rng.gen_range(0.0, 1.0),
+        ))
+    }
+
+    pub fn random_metal() -> Material {
+        let mut rng = thread_rng();
+        Material::Metal(
+            Vector3::new(
+                rng.gen_range(0.0, 1.0),
+                rng.gen_range(0.0, 1.0),
+                rng.gen_range(0.0, 1.0),
+            ),
+            rng.gen_range(0.0, 1.0),
+        )
+    }
+
+    pub fn random_dielectric() -> Material {
+        let mut rng = thread_rng();
+        Material::Dielectric(rng.gen_range(1.3, 3.2))
+    }
+
+    /// Box the material-generating closures in order to make them lazy.
+    /// This way only one material is generated.
+    pub fn random_material() -> Material {
+        let mut rng = thread_rng();
+        let fns = vec![
+            Box::new(|| Material::random_metal()) as Box<Fn() -> Material>,
+            Box::new(|| Material::random_lambertian()) as Box<Fn() -> Material>,
+            Box::new(|| Material::random_dielectric()) as Box<Fn() -> Material>,
+        ];
+        match seq::sample_iter(&mut rng, fns, 1) {
+            Ok(v) => v[0](),
+            Err(v) => v[0](),
+        }
+    }
 }
 
 /// A `Scatterable` scatters the light rays that hit it.
