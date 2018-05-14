@@ -2,7 +2,6 @@ use nalgebra::{Point3, Vector3};
 use ray::Ray;
 use sphere::Sphere;
 use std::f64::consts;
-use vec_util;
 
 /// A camera represented as a single 3D point and a rectangular sensor.
 /// The sensor is identified by its lower left corner and two directional vectors (one horizontal

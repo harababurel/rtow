@@ -18,38 +18,45 @@ pub type RefractiveIndex = f64;
 #[derive(Debug, Copy, Clone)]
 pub enum Material {
     /// Matte.
-    Lambertian(Attenuation),
+    Lambertian { attenuation: Vector3<f64> },
     /// Metal.
-    Metal(Attenuation, Fuzziness),
+    Metal {
+        attenuation: Vector3<f64>,
+        fuzziness: f64,
+    },
     /// i.e. glass.
-    Dielectric(RefractiveIndex),
+    Dielectric { refractive_index: f64 },
 }
 
 impl Material {
     pub fn random_lambertian() -> Material {
         let mut rng = thread_rng();
-        Material::Lambertian(Vector3::new(
-            rng.gen_range(0.0, 1.0),
-            rng.gen_range(0.0, 1.0),
-            rng.gen_range(0.0, 1.0),
-        ))
-    }
-
-    pub fn random_metal() -> Material {
-        let mut rng = thread_rng();
-        Material::Metal(
-            Vector3::new(
+        Material::Lambertian {
+            attenuation: Vector3::new(
                 rng.gen_range(0.0, 1.0),
                 rng.gen_range(0.0, 1.0),
                 rng.gen_range(0.0, 1.0),
             ),
-            rng.gen_range(0.0, 1.0),
-        )
+        }
+    }
+
+    pub fn random_metal() -> Material {
+        let mut rng = thread_rng();
+        Material::Metal {
+            attenuation: Vector3::new(
+                rng.gen_range(0.0, 1.0),
+                rng.gen_range(0.0, 1.0),
+                rng.gen_range(0.0, 1.0),
+            ),
+            fuzziness: rng.gen_range(0.0, 1.0),
+        }
     }
 
     pub fn random_dielectric() -> Material {
         let mut rng = thread_rng();
-        Material::Dielectric(rng.gen_range(1.3, 3.2))
+        Material::Dielectric {
+            refractive_index: rng.gen_range(1.3, 3.2),
+        }
     }
 
     /// Box the material-generating closures in order to make them lazy.
@@ -88,12 +95,15 @@ impl Scatterable for Material {
     /// angle of incidence. This probability is roughly approximated by the `schlick` polynomial.
     fn scatter(&self, ray: &Ray, hitpoint: &HitPoint) -> Option<(Ray, Attenuation)> {
         match self {
-            &Material::Lambertian(attenuation) => {
+            &Material::Lambertian { attenuation } => {
                 let direction = hitpoint.normal + Sphere::random_point_in_unit_sphere();
                 let scattered_ray = Ray::new(hitpoint.p, direction);
                 Some((scattered_ray, attenuation.clone()))
             }
-            &Material::Metal(attenuation, fuzziness) => {
+            &Material::Metal {
+                attenuation,
+                fuzziness,
+            } => {
                 let reflection_direction =
                     vec_util::reflection(&ray.direction().normalize(), &hitpoint.normal)
                         + fuzziness * Sphere::random_point_in_unit_sphere();
@@ -108,7 +118,7 @@ impl Scatterable for Material {
                     _ => None,
                 }
             }
-            &Material::Dielectric(refractive_index) => {
+            &Material::Dielectric { refractive_index } => {
                 let reflected_vector = vec_util::reflection(&ray.direction(), &hitpoint.normal);
                 let air_refractive_index = 1.0;
                 let attenuation = Vector3::new(1.0, 1.0, 1.0); // glass absorbs nothing

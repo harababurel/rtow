@@ -34,13 +34,18 @@ fn random_scene(object_count: u32) -> Vec<Sphere> {
     let ground = Sphere::new(
         Point3::new(0.0, -EARTH_RADIUS, 0.0),
         EARTH_RADIUS,
-        Material::Lambertian(Vector3::new(0.5, 0.5, 0.5)),
+        Material::Lambertian {
+            attenuation: Vector3::new(0.5, 0.5, 0.5),
+        },
     );
 
     let metal_sphere = Sphere::new(
         Point3::new(0.0, 1.0, -4.0),
         1.0,
-        Material::Metal(Vector3::new(0.7, 0.6, 0.5), 0.0),
+        Material::Metal {
+            attenuation: Vector3::new(0.7, 0.6, 0.5),
+            fuzziness: 0.0,
+        },
     );
     let glass_sphere = Sphere::new(
         Point3::new(0.0, 1.0, -8.0),
