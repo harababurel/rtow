@@ -1,5 +1,6 @@
 extern crate chan;
 extern crate image;
+#[macro_use]
 extern crate log;
 extern crate nalgebra;
 extern crate pbr;
@@ -17,7 +18,6 @@ pub mod vec_util;
 
 use camera::{Camera, Lens, Orientation};
 pub use config::{Configuration, Resolution};
-use hitable::Hitable;
 use image::{GenericImage, Rgba};
 use material::Material;
 use nalgebra::{Point3, Vector3};
@@ -28,22 +28,63 @@ use std::f64;
 use std::fs::File;
 use std::thread;
 
-fn random_scene(object_count: u32) -> Vec<Sphere> {
-    let matte = Material::Lambertian(Vector3::new(0.4, 0.2, 0.1));
-    let metal = Material::Metal(Vector3::new(0.7, 0.6, 0.5), 0.0);
-    let glass = Material::Dielectric(1.5);
+const EARTH_RADIUS: f64 = 6.371e6;
 
+fn random_scene(object_count: u32) -> Vec<Sphere> {
     let ground = Sphere::new(
-        Point3::new(0.0, -1000.0, 0.0),
-        1000.0,
+        Point3::new(0.0, -EARTH_RADIUS, 0.0),
+        EARTH_RADIUS,
         Material::Lambertian(Vector3::new(0.5, 0.5, 0.5)),
     );
 
-    let glass_sphere = Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, glass);
-    let matte_sphere = Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, matte);
-    let metal_sphere = Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, metal);
+    let metal_sphere = Sphere::new(
+        Point3::new(0.0, 1.0, -4.0),
+        1.0,
+        Material::Metal(Vector3::new(0.7, 0.6, 0.5), 0.0),
+    );
+    let glass_sphere = Sphere::new(
+        Point3::new(0.0, 1.0, -8.0),
+        1.0,
+        Material::random_dielectric(),
+    );
+    let matte_sphere = Sphere::new(
+        Point3::new(0.0, 1.0, -12.0),
+        1.0,
+        Material::random_lambertian(),
+    );
 
-    vec![ground, glass_sphere, matte_sphere, metal_sphere]
+    let mut world = vec![ground.clone(), glass_sphere, matte_sphere, metal_sphere];
+    let mut rng = thread_rng();
+
+    for _ in 0..object_count {
+        loop {
+            let x = rng.gen_range(-30.0, 30.0);
+            let z = rng.gen_range(-60.0, 5.0);
+            let radius = rng.gen_range(0.1, 0.5);
+
+            // Account for the curvature of the earth.
+            let sea_level = (ground.radius().powf(2.0) - (x - ground.center().x).powf(2.0)
+                - (z - ground.center().z).powf(2.0))
+                .sqrt() + ground.center().y;
+            debug!("sea level: {}", sea_level);
+
+            let y = sea_level + radius;
+            let sphere = Sphere::new(Point3::new(x, y, z), y, Material::random_material());
+
+            if world.iter().any(|existing| existing.intersects(&sphere)) {
+                continue;
+            } else {
+                world.push(sphere);
+                break;
+            }
+        }
+    }
+
+    for sphere in &world {
+        info!("Sphere: {}", sphere.center());
+    }
+
+    world
 }
 
 /// Entry point for the application. Generates a hardcoded world, simulates the ray tracing and
@@ -52,62 +93,11 @@ pub fn run(cfg: Configuration) {
     // Fail early in case of I/O errors.
     let ref mut fout = File::create(&cfg.output_filename).unwrap();
 
-    // let metal = Material::Metal(Vector3::new(0.6, 0.5, 0.2), 1.0);
-    // let matte = Material::Lambertian(Vector3::new(0.5, 0.5, 0.5));
-
-    // Snowman
-    // let world = vec![
-    //     Sphere::new(Point3::new(0.0, -0.2, -1.0), 0.3, metal.clone()), // lower body
-    //     Sphere::new(Point3::new(0.0, 0.24, -1.0), 0.2, metal.clone()), // upper body
-    //     Sphere::new(Point3::new(0.0, 0.52, -0.9), 0.12, metal.clone()), // head
-    //     Sphere::new(Point3::new(-0.04, 0.53, -0.80), 0.03, metal.clone()), // left eye
-    //     Sphere::new(Point3::new(0.04, 0.53, -0.80), 0.03, metal.clone()), // right eye
-    //     Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, matte.clone()), // ground
-    // ];
-
-    // let world = vec![
-    //     Sphere::new(
-    //         Point3::new(0.0, 0.0, -1.0),
-    //         0.5,
-    //         Material::Lambertian(Vector3::new(0.1, 0.2, 0.5)),
-    //     ),
-    //     Sphere::new(
-    //         Point3::new(0.0, -100.5, -1.0),
-    //         100.0,
-    //         Material::Lambertian(Vector3::new(0.8, 0.8, 0.0)),
-    //     ),
-    //     Sphere::new(
-    //         Point3::new(1.0, 0.0, -1.0),
-    //         0.5,
-    //         Material::Metal(Vector3::new(0.8, 0.6, 0.2), 0.0),
-    //     ),
-    //     Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, Material::Dielectric(1.5)),
-    //     Sphere::new(
-    //         Point3::new(-1.0, 0.0, -1.0),
-    //         -0.45,
-    //         Material::Dielectric(1.5),
-    //     ),
-    // ];
-    //
-    let world = random_scene(0);
-
-    // let r = f64::consts::FRAC_PI_4.cos();
-    // let world = vec![
-    //     Sphere::new(
-    //         Point3::new(-r, 0.0, -1.0),
-    //         r,
-    //         Material::Lambertian(Vector3::new(0.0, 0.0, 1.0)),
-    //     ),
-    //     Sphere::new(
-    //         Point3::new(r, 0.0, -1.0),
-    //         r,
-    //         Material::Lambertian(Vector3::new(1.0, 0.0, 0.0)),
-    //     ),
-    // ];
+    let world = random_scene(500);
 
     let orientation = Orientation {
-        look_from: Point3::new(7.0, 1.5, 2.0),
-        look_at: Point3::new(0.0, 0.0, -1.0),
+        look_from: Point3::new(-2.0, 1.7, 0.0),
+        look_at: Point3::new(0.0, 1.0, -8.0),
         upwards: Vector3::new(0.0, 1.0, 0.0),
     };
 
@@ -117,7 +107,7 @@ pub fn run(cfg: Configuration) {
     };
 
     let aspect_ratio = cfg.resolution.width as f64 / cfg.resolution.height as f64;
-    let camera = Camera::new(orientation, lens, 70.0, aspect_ratio);
+    let camera = Camera::new(orientation, lens, 50.0, aspect_ratio);
 
     let r = {
         let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();
@@ -135,10 +125,7 @@ pub fn run(cfg: Configuration) {
             // accurate ETA.
             thread_rng().shuffle(&mut pixels);
 
-            pixels.into_iter().for_each(|pixel| {
-                // println!("sending pixel");
-                s.send(pixel)
-            });
+            pixels.into_iter().for_each(|pixel| s.send(pixel));
         });
         r
     };
@@ -156,8 +143,6 @@ pub fn run(cfg: Configuration) {
         let ret_s = ret_s.clone();
         thread::spawn(move || {
             for pixel in r {
-                // println!("Received pixel: {:?}", pixel);
-
                 let mut color: Vector3<f64> = (0..cfg.n_samples)
                     .into_iter()
                     .map(|_| {

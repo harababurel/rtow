@@ -4,6 +4,7 @@ use nalgebra::{Point3, Vector3};
 use rand::{thread_rng, Rng};
 use ray::Ray;
 use std::cmp::Ordering;
+use vec_util;
 
 /// A 3D sphere.
 #[derive(Clone, Debug)]
@@ -60,6 +61,12 @@ impl Sphere {
             .take(1)
             .next()
             .unwrap()
+    }
+
+    pub fn intersects(&self, other: &Sphere) -> bool {
+        let distance_between_centers = vec_util::length(&(other.center() - self.center()));
+
+        distance_between_centers <= self.radius() + other.radius()
     }
 }
 
