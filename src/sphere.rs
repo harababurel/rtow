@@ -103,7 +103,7 @@ impl Hitable for Sphere {
                             t,
                             p,
                             normal: Unit::new_normalize(normal),
-                            material: self.material.clone(),
+                            material: self.material,
                         });
                     }
                 }

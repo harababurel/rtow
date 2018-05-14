@@ -2,6 +2,7 @@ extern crate chan;
 extern crate image;
 #[macro_use]
 extern crate log;
+extern crate cpuprofiler;
 extern crate nalgebra;
 extern crate pbr;
 extern crate pretty_env_logger;
@@ -18,6 +19,7 @@ pub mod util;
 
 use camera::{Camera, Lens, Orientation};
 pub use config::{Configuration, Resolution};
+use cpuprofiler::PROFILER;
 use image::{GenericImage, Rgba};
 use material::Material;
 use material::Material::{Lambertian, Metal};
@@ -91,6 +93,7 @@ pub fn run(cfg: Configuration) {
     // Fail early in case of I/O errors.
     let ref mut fout = File::create(&cfg.output_filename).unwrap();
 
+    PROFILER.lock().unwrap().start("./my-prof.profile").unwrap();
     let world = random_scene(500);
 
     let orientation = Orientation {
@@ -128,14 +131,14 @@ pub fn run(cfg: Configuration) {
         r
     };
 
-    let (ret_s, ret_r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();
+    let (ret_s, ret_r) = chan::async();
     let wg = chan::WaitGroup::new();
 
     for _ in 0..cfg.n_threads {
         wg.add(1);
+
         let wg = wg.clone();
         let r = r.clone();
-
         let cfg = cfg.clone();
         let world = world.clone();
         let ret_s = ret_s.clone();
@@ -168,6 +171,7 @@ pub fn run(cfg: Configuration) {
             wg.done();
         });
     }
+
     drop(ret_s);
 
     let mut img = image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height);
@@ -180,4 +184,6 @@ pub fn run(cfg: Configuration) {
     wg.wait();
     img.save(fout, image::PNG).unwrap();
     pb.finish_print("Done!");
+
+    PROFILER.lock().unwrap().stop().unwrap();
 }
