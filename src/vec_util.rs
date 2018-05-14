@@ -22,8 +22,8 @@ pub fn refraction(
 
     match discriminant.partial_cmp(&0.0) {
         Some(Ordering::Greater) => {
-            let refracted_ray =
-                refractive_index_ratio * (v.normalize() - normal * dt) - normal * discriminant.sqrt();
+            let refracted_ray = refractive_index_ratio * (v.normalize() - normal * dt)
+                - normal * discriminant.sqrt();
             Some(refracted_ray)
         }
         _ => None,
