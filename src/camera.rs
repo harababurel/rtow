@@ -41,8 +41,8 @@ impl Camera {
         let half_height = (theta / 2.0).tan();
         let half_width = aspect_ratio * half_height;
 
-        let w = vec_util::unit(&(orientation.look_from - orientation.look_at));
-        let u = vec_util::unit(&(orientation.upwards.cross(&w)));
+        let w = (orientation.look_from - orientation.look_at).normalize();
+        let u = orientation.upwards.cross(&w).normalize();
         let v = w.cross(&u);
 
         Camera {

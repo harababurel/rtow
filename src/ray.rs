@@ -58,7 +58,7 @@ impl Ray {
                 }
             }
             None => {
-                let unit_direction = vec_util::unit(&self.direction());
+                let unit_direction = self.direction().normalize();
                 let t = 0.5 * (unit_direction.y + 1.0);
 
                 let white = Vector3::new(1.0, 1.0, 1.0);

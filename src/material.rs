@@ -95,7 +95,7 @@ impl Scatterable for Material {
             }
             &Material::Metal(attenuation, fuzziness) => {
                 let reflection_direction =
-                    vec_util::reflection(&vec_util::unit(ray.direction()), &hitpoint.normal)
+                    vec_util::reflection(&ray.direction().normalize(), &hitpoint.normal)
                         + fuzziness * Sphere::random_point_in_unit_sphere();
                 let scattered_ray = Ray::new(hitpoint.p, reflection_direction);
 

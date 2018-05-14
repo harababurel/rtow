@@ -1,11 +1,6 @@
 use nalgebra::Vector3;
 use std::cmp::Ordering;
 
-/// Takes a vector and adjusts its size so that it becomes a unit vector.
-pub fn unit(v: &Vector3<f64>) -> Vector3<f64> {
-    v.clone() / length(&v)
-}
-
 /// Length of a vector.
 pub fn length(v: &Vector3<f64>) -> f64 {
     v.dot(&v).sqrt()
@@ -22,13 +17,13 @@ pub fn refraction(
     normal: &Vector3<f64>,
     refractive_index_ratio: f64,
 ) -> Option<Vector3<f64>> {
-    let dt = unit(&v).dot(&normal);
+    let dt = v.normalize().dot(&normal);
     let discriminant = 1.0 - refractive_index_ratio.powf(2.0) * (1.0 - dt.powf(2.0));
 
     match discriminant.partial_cmp(&0.0) {
         Some(Ordering::Greater) => {
             let refracted_ray =
-                refractive_index_ratio * (unit(&v) - normal * dt) - normal * discriminant.sqrt();
+                refractive_index_ratio * (v.normalize() - normal * dt) - normal * discriminant.sqrt();
             Some(refracted_ray)
         }
         _ => None,
