@@ -40,7 +40,7 @@ impl Ray {
         match world.hit(self, 0.001, f64::INFINITY) {
             Some(hitpoint) => {
                 if depth > 10 {
-                    return Vector3::new(0.0, 0.0, 0.0);
+                    return Vector3::new(0., 0., 0.);
                 }
 
                 match hitpoint.material.scatter(self, &hitpoint) {
@@ -53,16 +53,16 @@ impl Ray {
                             attenuation.z * color.z,
                         )
                     }
-                    None => Vector3::new(0.0, 0.0, 0.0),
+                    None => Vector3::new(0., 0., 0.),
                 }
             }
             None => {
                 let unit_direction = self.direction().normalize();
-                let t = 0.5 * (unit_direction.y + 1.0);
+                let t = 0.5 * (unit_direction.y + 1.);
 
-                let white = Vector3::new(1.0, 1.0, 1.0);
-                let cyan = Vector3::new(0.5, 0.7, 1.0);
-                (1.0 - t) * white + t * cyan
+                let white = Vector3::new(1., 1., 1.);
+                let cyan = Vector3::new(0.5, 0.7, 1.);
+                (1. - t) * white + t * cyan
             }
         }
     }

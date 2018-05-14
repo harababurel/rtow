@@ -36,8 +36,8 @@ impl Camera {
     /// Creates a new camera centered in `(0, 0, 0)`. The sensor is constructed based on the desired
     /// field of view and aspect ratio.
     pub fn new(orientation: Orientation, lens: Lens, vert_fov: f64, aspect_ratio: f64) -> Camera {
-        let theta = vert_fov * consts::PI / 180.0;
-        let half_height = (theta / 2.0).tan();
+        let theta = vert_fov * consts::PI / 180.;
+        let half_height = (theta / 2.).tan();
         let half_width = aspect_ratio * half_height;
 
         let w = (orientation.look_from - orientation.look_at).normalize();
@@ -51,8 +51,8 @@ impl Camera {
                 - half_height * lens.focal_length * v
                 - lens.focal_length * w)
                 .coords,
-            horizontal: 2.0 * half_width * lens.focal_length * u,
-            vertical: 2.0 * half_height * lens.focal_length * v,
+            horizontal: 2. * half_width * lens.focal_length * u,
+            vertical: 2. * half_height * lens.focal_length * v,
             u,
             v,
             w,
@@ -75,6 +75,6 @@ impl Camera {
     }
 
     pub fn lens_radius(&self) -> f64 {
-        self.lens.aperture / 2.0
+        self.lens.aperture / 2.
     }
 }

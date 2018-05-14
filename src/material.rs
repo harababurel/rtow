@@ -33,9 +33,9 @@ impl Material {
         let mut rng = thread_rng();
         Material::Lambertian {
             attenuation: Vector3::new(
-                rng.gen_range(0.0, 1.0),
-                rng.gen_range(0.0, 1.0),
-                rng.gen_range(0.0, 1.0),
+                rng.gen_range(0., 1.),
+                rng.gen_range(0., 1.),
+                rng.gen_range(0., 1.),
             ),
         }
     }
@@ -44,11 +44,11 @@ impl Material {
         let mut rng = thread_rng();
         Material::Metal {
             attenuation: Vector3::new(
-                rng.gen_range(0.0, 1.0),
-                rng.gen_range(0.0, 1.0),
-                rng.gen_range(0.0, 1.0),
+                rng.gen_range(0., 1.),
+                rng.gen_range(0., 1.),
+                rng.gen_range(0., 1.),
             ),
-            fuzziness: rng.gen_range(0.0, 1.0),
+            fuzziness: rng.gen_range(0., 1.),
         }
     }
 
@@ -112,7 +112,7 @@ impl Scatterable for Material {
                 match scattered_ray
                     .direction()
                     .dot(&hitpoint.normal)
-                    .partial_cmp(&0.0)
+                    .partial_cmp(&0.)
                 {
                     Some(Ordering::Greater) => Some((scattered_ray, attenuation.clone())),
                     _ => None,
@@ -120,15 +120,15 @@ impl Scatterable for Material {
             }
             &Material::Dielectric { refractive_index } => {
                 let reflected_vector = vec_util::reflection(&ray.direction(), &hitpoint.normal);
-                let air_refractive_index = 1.0;
-                let attenuation = Vector3::new(1.0, 1.0, 1.0); // glass absorbs nothing
+                let air_refractive_index = 1.;
+                let attenuation = Vector3::new(1., 1., 1.); // glass absorbs nothing
 
                 let mut outward_normal = hitpoint.normal;
                 let mut refractive_index_ratio = air_refractive_index / refractive_index;
                 let mut cosine =
                     -ray.direction().dot(&hitpoint.normal) / vec_util::length(ray.direction());
 
-                if ray.direction().dot(&hitpoint.normal) > 0.0 {
+                if ray.direction().dot(&hitpoint.normal) > 0. {
                     outward_normal = -hitpoint.normal;
                     refractive_index_ratio = refractive_index / air_refractive_index;
                     cosine = refractive_index * ray.direction().dot(&hitpoint.normal)
@@ -142,7 +142,7 @@ impl Scatterable for Material {
                 let reflection_prob = vec_util::schlick(cosine, refractive_index);
                 let mut rng = thread_rng();
 
-                if rng.gen_range(0.0, 1.0) < reflection_prob {
+                if rng.gen_range(0., 1.) < reflection_prob {
                     final_vector = reflected_vector;
                 }
 

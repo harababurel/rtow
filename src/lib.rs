@@ -32,7 +32,7 @@ const EARTH_RADIUS: f64 = 6.371e6;
 
 fn random_scene(object_count: u32) -> Vec<Sphere> {
     let ground = Sphere::new(
-        Point3::new(0.0, -EARTH_RADIUS, 0.0),
+        Point3::new(0., -EARTH_RADIUS, 0.),
         EARTH_RADIUS,
         Material::Lambertian {
             attenuation: Vector3::new(0.5, 0.5, 0.5),
@@ -40,21 +40,21 @@ fn random_scene(object_count: u32) -> Vec<Sphere> {
     );
 
     let metal_sphere = Sphere::new(
-        Point3::new(0.0, 1.0, -4.0),
-        1.0,
+        Point3::new(0., 1., -4.),
+        1.,
         Material::Metal {
             attenuation: Vector3::new(0.7, 0.6, 0.5),
-            fuzziness: 0.0,
+            fuzziness: 0.,
         },
     );
     let glass_sphere = Sphere::new(
-        Point3::new(0.0, 1.0, -8.0),
-        1.0,
+        Point3::new(0., 1., -8.),
+        1.,
         Material::random_dielectric(),
     );
     let matte_sphere = Sphere::new(
-        Point3::new(0.0, 1.0, -12.0),
-        1.0,
+        Point3::new(0., 1., -12.),
+        1.,
         Material::random_lambertian(),
     );
 
@@ -63,14 +63,14 @@ fn random_scene(object_count: u32) -> Vec<Sphere> {
 
     for _ in 0..object_count {
         loop {
-            let x = rng.gen_range(-30.0, 30.0);
-            let z = rng.gen_range(-60.0, 5.0);
+            let x = rng.gen_range(-30., 30.);
+            let z = rng.gen_range(-60., 5.);
             let radius = rng.gen_range(0.1, 0.5);
 
             // Account for the curvature of the earth.
-            let sea_level = (ground.radius().powf(2.0) - (x - ground.center().x).powf(2.0)
-                - (z - ground.center().z).powf(2.0))
-                .sqrt() + ground.center().y;
+            let sea_level = (ground.radius().powf(2.) - (x - ground.x()).powf(2.)
+                - (z - ground.z()).powf(2.))
+                .sqrt() + ground.y();
             debug!("sea level: {}", sea_level);
 
             let y = sea_level + radius;
@@ -101,9 +101,9 @@ pub fn run(cfg: Configuration) {
     let world = random_scene(500);
 
     let orientation = Orientation {
-        look_from: Point3::new(-2.0, 1.7, 0.0),
-        look_at: Point3::new(0.0, 1.0, -8.0),
-        upwards: Vector3::new(0.0, 1.0, 0.0),
+        look_from: Point3::new(-2., 1.7, 0.),
+        look_at: Point3::new(0., 1., -8.),
+        upwards: Vector3::new(0., 1., 0.),
     };
 
     let lens = Lens {
@@ -112,7 +112,7 @@ pub fn run(cfg: Configuration) {
     };
 
     let aspect_ratio = cfg.resolution.width as f64 / cfg.resolution.height as f64;
-    let camera = Camera::new(orientation, lens, 50.0, aspect_ratio);
+    let camera = Camera::new(orientation, lens, 50., aspect_ratio);
 
     let r = {
         let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();

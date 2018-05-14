@@ -27,6 +27,18 @@ impl Sphere {
         &self.center
     }
 
+    pub fn x(&self) -> f64 {
+        self.center.x
+    }
+
+    pub fn y(&self) -> f64 {
+        self.center.y
+    }
+
+    pub fn z(&self) -> f64 {
+        self.center.z
+    }
+
     pub fn radius(&self) -> f64 {
         self.radius
     }
@@ -41,12 +53,12 @@ impl Sphere {
             .into_iter()
             .map(|_| {
                 Vector3::new(
-                    rng.gen_range(-1.0, 1.0),
-                    rng.gen_range(-1.0, 1.0),
-                    rng.gen_range(-1.0, 1.0),
+                    rng.gen_range(-1., 1.),
+                    rng.gen_range(-1., 1.),
+                    rng.gen_range(-1., 1.),
                 )
             })
-            .filter(|point| point.dot(&point) < 1.0)
+            .filter(|point| point.dot(&point) < 1.)
             .take(1)
             .next()
             .unwrap()
@@ -56,8 +68,8 @@ impl Sphere {
         let mut rng = thread_rng();
         (0..)
             .into_iter()
-            .map(|_| Vector3::new(rng.gen_range(-1.0, 1.0), rng.gen_range(-1.0, 1.0), 0.0))
-            .filter(|point| point.dot(&point) < 1.0)
+            .map(|_| Vector3::new(rng.gen_range(-1., 1.), rng.gen_range(-1., 1.), 0.))
+            .filter(|point| point.dot(&point) < 1.)
             .take(1)
             .next()
             .unwrap()
@@ -78,11 +90,11 @@ impl Hitable for Sphere {
 
         let a = ray.direction().dot(&ray.direction());
         let b = oc.dot(&ray.direction());
-        let c = oc.dot(&oc) - self.radius().powf(2.0);
+        let c = oc.dot(&oc) - self.radius().powf(2.);
 
-        let delta = b.powf(2.0) - a * c;
+        let delta = b.powf(2.) - a * c;
 
-        match delta.partial_cmp(&0.0) {
+        match delta.partial_cmp(&0.) {
             Some(Ordering::Greater) => {
                 for t in vec![(-b - delta.sqrt()) / a, (-b + delta.sqrt()) / a] {
                     if t_min < t && t < tmax {
