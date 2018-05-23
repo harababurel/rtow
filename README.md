@@ -6,5 +6,7 @@
 
 ---
 
+Full size renders (PNG, 7680x4320, 500 samples, ~19MB): [1](https://sergiu.ml/~sergiu/render.png) and [2](https://sergiu.ml/~sergiu/canopus_render.png).
+
 ![Render](https://i.imgur.com/qU5tRFZ.jpg)
 
