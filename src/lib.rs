@@ -2,7 +2,6 @@ extern crate chan;
 extern crate image;
 #[macro_use]
 extern crate log;
-extern crate cpuprofiler;
 extern crate nalgebra;
 extern crate pbr;
 extern crate pretty_env_logger;
@@ -19,7 +18,6 @@ pub mod util;
 
 use camera::{Camera, Lens, Orientation};
 pub use config::{Configuration, Resolution};
-use cpuprofiler::PROFILER;
 use image::{GenericImage, Rgba};
 use material::Material;
 use material::Material::{Lambertian, Metal};
@@ -93,7 +91,6 @@ pub fn run(cfg: Configuration) {
     // Fail early in case of I/O errors.
     let ref mut fout = File::create(&cfg.output_filename).unwrap();
 
-    PROFILER.lock().unwrap().start("./my-prof.profile").unwrap();
     let world = random_scene(500);
 
     let orientation = Orientation {
@@ -184,6 +181,4 @@ pub fn run(cfg: Configuration) {
     wg.wait();
     img.save(fout, image::PNG).unwrap();
     pb.finish_print("Done!");
-
-    PROFILER.lock().unwrap().stop().unwrap();
 }

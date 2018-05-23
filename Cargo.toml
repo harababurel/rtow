@@ -8,7 +8,6 @@ license = "MIT"
 [dependencies]
 chan = "0.1.21"
 clap = { version = "2.31.2", features = ["yaml"]}
-cpuprofiler = "0.0.3"
 image = "0.18.0"
 log = "0.4.1"
 nalgebra = "0.14.1"
