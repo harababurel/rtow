@@ -10,7 +10,7 @@ chan = "0.1.21"
 clap = { version = "2.31.2", features = ["yaml"]}
 image = "0.18.0"
 log = "0.4.1"
-nalgebra = "0.14.1"
+nalgebra = "0.14.4"
 num_cpus = "1.8.0"
 pbr = "1.0.1"
 pretty_env_logger = "0.2.2"
