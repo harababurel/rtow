@@ -29,7 +29,7 @@ impl Ray {
     /// The point at some parameter `t` is defined as a 3D point located on the ray at a distance
     /// of `t * direction` from the origin.
     pub fn point_at_parameter(&self, t: f64) -> Point3<f64> {
-        &self.origin + t * &self.direction
+        self.origin + t * self.direction
     }
 
     /// Traces the ray backwards and computes its color. It simulates at most 100 hit points with

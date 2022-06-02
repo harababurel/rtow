@@ -1,6 +1,6 @@
 use clap::Parser;
 use regex::Regex;
-use std::error::Error;
+
 use std::str::FromStr;
 
 /// Models the size of an image.
@@ -51,7 +51,7 @@ impl std::str::FromStr for Resolution {
 
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
         let re = Regex::new(r"(\d+)[xX](\d+)")?;
-        let cap = re.captures(&s).unwrap();
+        let cap = re.captures(s).unwrap();
 
         let width = cap[1].parse::<u32>().unwrap();
         let height = cap[2].parse::<u32>().unwrap();

@@ -75,7 +75,7 @@ impl Camera {
         let direction = self.lower_left_corner + u * self.horizontal + v * self.vertical
             - self.origin.coords
             - offset;
-        Ray::new(self.origin.clone() + offset, direction)
+        Ray::new(self.origin + offset, direction)
     }
 
     pub fn lens_radius(&self) -> f64 {

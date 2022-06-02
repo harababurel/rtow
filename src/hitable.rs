@@ -32,9 +32,7 @@ where
     /// `Vec`.
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitPoint> {
         self.iter()
-            .map(|obj| obj.hit(ray, t_min, t_max))
-            .filter(|hitpoint| hitpoint.is_some())
-            .map(|hitpoint| hitpoint.unwrap())
+            .filter_map(|obj| obj.hit(ray, t_min, t_max))
             .min_by(|x, y| x.t.partial_cmp(&y.t).unwrap())
     }
 }

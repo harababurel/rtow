@@ -64,9 +64,9 @@ impl Material {
     pub fn random_material() -> Material {
         let mut rng = thread_rng();
         let fns = vec![
-            Box::new(|| Material::random_metal()) as Box<dyn Fn() -> Material>,
-            Box::new(|| Material::random_lambertian()) as Box<dyn Fn() -> Material>,
-            Box::new(|| Material::random_dielectric()) as Box<dyn Fn() -> Material>,
+            Box::new(Material::random_metal) as Box<dyn Fn() -> Material>,
+            Box::new(Material::random_lambertian) as Box<dyn Fn() -> Material>,
+            Box::new(Material::random_dielectric) as Box<dyn Fn() -> Material>,
         ];
         fns[rng.gen::<usize>() % 3]()
     }
@@ -91,13 +91,14 @@ impl Scatterable for Material {
     /// probability of each event depends on multiple factors, such as the refractive index and the
     /// angle of incidence. This probability is roughly approximated by the `schlick` polynomial.
     fn scatter(&self, ray: &Ray, hitpoint: &HitPoint) -> Option<(Ray, Attenuation)> {
-        match self {
-            &Material::Lambertian { attenuation } => {
-                let direction = hitpoint.normal.into_inner() + Sphere::random_point_in_unit_sphere();
+        match *self {
+            Material::Lambertian { attenuation } => {
+                let direction =
+                    hitpoint.normal.into_inner() + Sphere::random_point_in_unit_sphere();
                 let scattered_ray = Ray::new(hitpoint.p, direction);
-                Some((scattered_ray, attenuation.clone()))
+                Some((scattered_ray, attenuation))
             }
-            &Material::Metal {
+            Material::Metal {
                 attenuation,
                 fuzziness,
             } => {
@@ -111,12 +112,12 @@ impl Scatterable for Material {
                     .dot(&hitpoint.normal)
                     .partial_cmp(&0.)
                 {
-                    Some(Ordering::Greater) => Some((scattered_ray, attenuation.clone())),
+                    Some(Ordering::Greater) => Some((scattered_ray, attenuation)),
                     _ => None,
                 }
             }
-            &Material::Dielectric { refractive_index } => {
-                let reflected_vector = util::reflection(&ray.direction(), &hitpoint.normal);
+            Material::Dielectric { refractive_index } => {
+                let reflected_vector = util::reflection(ray.direction(), &hitpoint.normal);
                 let air_refractive_index = 1.;
                 let attenuation = Vector3::new(1., 1., 1.); // glass absorbs nothing
 
@@ -133,7 +134,7 @@ impl Scatterable for Material {
                 }
 
                 let mut final_vector =
-                    util::refraction(&ray.direction(), &outward_normal, refractive_index_ratio)
+                    util::refraction(ray.direction(), &outward_normal, refractive_index_ratio)
                         .unwrap_or(reflected_vector);
 
                 let reflection_prob = util::schlick(cosine, refractive_index);
