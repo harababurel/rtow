@@ -1,13 +1,13 @@
+use crate::ray::Ray;
+use crate::sphere::Sphere;
 use nalgebra::{Point3, Unit, Vector3};
-use ray::Ray;
-use sphere::Sphere;
 use std::f64::consts;
 
 /// A camera represented as a single 3D point and a rectangular sensor.
 /// The sensor is identified by its lower left corner and two directional vectors (one horizontal
 /// and one vertical).
 ///
-// /// The sensor is split into a grid of pixels.
+/// The sensor is split into a grid of pixels.
 #[derive(Copy, Clone)]
 pub struct Camera {
     lens: Lens,
@@ -49,7 +49,8 @@ impl Camera {
         Camera {
             lens,
             origin: orientation.look_from,
-            lower_left_corner: (orientation.look_from - lens.focal_length * half_width * u
+            lower_left_corner: (orientation.look_from
+                - lens.focal_length * half_width * u
                 - half_height * lens.focal_length * v
                 - lens.focal_length * w)
                 .coords,
@@ -70,9 +71,10 @@ impl Camera {
     pub fn get_ray(&self, u: f64, v: f64) -> Ray {
         let rd = self.lens_radius() * Sphere::random_point_in_unit_disk();
 
-        let offset = self.u.unwrap() * rd.x + self.v.unwrap() * rd.y;
+        let offset = self.u.into_inner() * rd.x + self.v.into_inner() * rd.y;
         let direction = self.lower_left_corner + u * self.horizontal + v * self.vertical
-            - self.origin.coords - offset;
+            - self.origin.coords
+            - offset;
         Ray::new(self.origin.clone() + offset, direction)
     }
 

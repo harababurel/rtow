@@ -3,12 +3,12 @@ use std::cmp::Ordering;
 
 /// Length of a vector.
 pub fn length(v: &Vector3<f64>) -> f64 {
-    v.dot(&v).sqrt()
+    v.dot(v).sqrt()
 }
 
 /// [Reflection](https://upload.wikimedia.org/wikipedia/commons/1/10/Reflection_angles.svg)
 pub fn reflection(v: &Vector3<f64>, normal: &Vector3<f64>) -> Vector3<f64> {
-    v - 2. * v.dot(&normal) * normal
+    v - 2. * v.dot(normal) * normal
 }
 
 /// [Refraction](https://en.wikipedia.org/wiki/Refraction#/media/File:RefractionReflextion.svg)
@@ -17,7 +17,7 @@ pub fn refraction(
     normal: &Vector3<f64>,
     refractive_index_ratio: f64,
 ) -> Option<Vector3<f64>> {
-    let dt = v.normalize().dot(&normal);
+    let dt = v.normalize().dot(normal);
     let discriminant = 1. - refractive_index_ratio.powf(2.) * (1. - dt.powf(2.));
 
     match discriminant.partial_cmp(&0.) {

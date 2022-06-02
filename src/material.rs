@@ -1,10 +1,10 @@
-use hitable::HitPoint;
+use crate::hitable::HitPoint;
+use crate::ray::Ray;
+use crate::sphere::Sphere;
+use crate::util;
 use nalgebra::Vector3;
-use rand::{seq, thread_rng, Rng};
-use ray::Ray;
-use sphere::Sphere;
+use rand::{thread_rng, Rng};
 use std::cmp::Ordering;
-use util;
 
 /// Percentage of each RGB color that persists after a ray gets scattered.
 pub type Attenuation = Vector3<f64>;
@@ -33,9 +33,9 @@ impl Material {
         let mut rng = thread_rng();
         Material::Lambertian {
             attenuation: Vector3::new(
-                rng.gen_range(0., 1.),
-                rng.gen_range(0., 1.),
-                rng.gen_range(0., 1.),
+                rng.gen_range(0.0..1.0),
+                rng.gen_range(0.0..1.0),
+                rng.gen_range(0.0..1.0),
             ),
         }
     }
@@ -44,18 +44,18 @@ impl Material {
         let mut rng = thread_rng();
         Material::Metal {
             attenuation: Vector3::new(
-                rng.gen_range(0., 1.),
-                rng.gen_range(0., 1.),
-                rng.gen_range(0., 1.),
+                rng.gen_range(0.0..1.0),
+                rng.gen_range(0.0..1.0),
+                rng.gen_range(0.0..1.0),
             ),
-            fuzziness: rng.gen_range(0., 1.),
+            fuzziness: rng.gen_range(0.0..1.0),
         }
     }
 
     pub fn random_dielectric() -> Material {
         let mut rng = thread_rng();
         Material::Dielectric {
-            refractive_index: rng.gen_range(1.3, 3.2),
+            refractive_index: rng.gen_range(1.3..3.2),
         }
     }
 
@@ -64,14 +64,11 @@ impl Material {
     pub fn random_material() -> Material {
         let mut rng = thread_rng();
         let fns = vec![
-            Box::new(|| Material::random_metal()) as Box<Fn() -> Material>,
-            Box::new(|| Material::random_lambertian()) as Box<Fn() -> Material>,
-            Box::new(|| Material::random_dielectric()) as Box<Fn() -> Material>,
+            Box::new(|| Material::random_metal()) as Box<dyn Fn() -> Material>,
+            Box::new(|| Material::random_lambertian()) as Box<dyn Fn() -> Material>,
+            Box::new(|| Material::random_dielectric()) as Box<dyn Fn() -> Material>,
         ];
-        match seq::sample_iter(&mut rng, fns, 1) {
-            Ok(v) => v[0](),
-            Err(v) => v[0](),
-        }
+        fns[rng.gen::<usize>() % 3]()
     }
 }
 
@@ -96,7 +93,7 @@ impl Scatterable for Material {
     fn scatter(&self, ray: &Ray, hitpoint: &HitPoint) -> Option<(Ray, Attenuation)> {
         match self {
             &Material::Lambertian { attenuation } => {
-                let direction = hitpoint.normal.unwrap() + Sphere::random_point_in_unit_sphere();
+                let direction = hitpoint.normal.into_inner() + Sphere::random_point_in_unit_sphere();
                 let scattered_ray = Ray::new(hitpoint.p, direction);
                 Some((scattered_ray, attenuation.clone()))
             }
@@ -142,7 +139,7 @@ impl Scatterable for Material {
                 let reflection_prob = util::schlick(cosine, refractive_index);
                 let mut rng = thread_rng();
 
-                if rng.gen_range(0., 1.) < reflection_prob {
+                if (rng.gen_range(0.0..1.0) as f64) < reflection_prob {
                     final_vector = reflected_vector;
                 }
 

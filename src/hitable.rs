@@ -1,6 +1,6 @@
-use material::Material;
+use crate::material::Material;
+use crate::ray::Ray;
 use nalgebra::{Point3, Unit, Vector3};
-use ray::Ray;
 use std::fmt::Debug;
 
 /// The point of contact between a ray and a material.

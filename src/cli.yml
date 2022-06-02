@@ -1,5 +1,5 @@
 name: rtow
-version: "0.1.0"
+version: "0.1.1"
 author: Sergiu Puscas <srg.pscs@gmail.com>
 about: Rust implementation of Ray Tracing in One Weekend by Peter Shirley.
 args:

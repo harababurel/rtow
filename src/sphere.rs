@@ -1,10 +1,10 @@
-use hitable::{HitPoint, Hitable};
-use material::Material;
+use crate::hitable::{HitPoint, Hitable};
+use crate::material::Material;
+use crate::ray::Ray;
+use crate::util;
 use nalgebra::{Point3, Unit, Vector3};
 use rand::{thread_rng, Rng};
-use ray::Ray;
 use std::cmp::Ordering;
-use util;
 
 /// A 3D sphere.
 #[derive(Clone, Debug)]
@@ -53,12 +53,12 @@ impl Sphere {
             .into_iter()
             .map(|_| {
                 Vector3::new(
-                    rng.gen_range(-1., 1.),
-                    rng.gen_range(-1., 1.),
-                    rng.gen_range(-1., 1.),
+                    rng.gen_range(-1.0..1.0),
+                    rng.gen_range(-1.0..1.0),
+                    rng.gen_range(-1.0..1.0),
                 )
             })
-            .filter(|point| point.dot(&point) < 1.)
+            .filter(|point| point.dot(point) < 1.)
             .take(1)
             .next()
             .unwrap()
@@ -68,8 +68,8 @@ impl Sphere {
         let mut rng = thread_rng();
         (0..)
             .into_iter()
-            .map(|_| Vector3::new(rng.gen_range(-1., 1.), rng.gen_range(-1., 1.), 0.))
-            .filter(|point| point.dot(&point) < 1.)
+            .map(|_| Vector3::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.))
+            .filter(|point| point.dot(point) < 1.)
             .take(1)
             .next()
             .unwrap()
@@ -87,15 +87,15 @@ impl Hitable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, tmax: f64) -> Option<HitPoint> {
         let oc = ray.origin() - self.center();
 
-        let a = ray.direction().dot(&ray.direction());
-        let b = oc.dot(&ray.direction());
+        let a = ray.direction().dot(ray.direction());
+        let b = oc.dot(ray.direction());
         let c = oc.dot(&oc) - self.radius().powf(2.);
 
         let delta = b.powf(2.) - a * c;
 
         match delta.partial_cmp(&0.) {
             Some(Ordering::Greater) => {
-                for t in vec![(-b - delta.sqrt()) / a, (-b + delta.sqrt()) / a] {
+                for t in [(-b - delta.sqrt()) / a, (-b + delta.sqrt()) / a] {
                     if t_min < t && t < tmax {
                         let p = ray.point_at_parameter(t);
                         let normal = (p - self.center()) / self.radius();

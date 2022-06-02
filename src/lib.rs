@@ -17,16 +17,16 @@ pub mod sphere;
 pub mod util;
 
 use camera::{Camera, Lens, Orientation};
-pub use config::{Configuration, Resolution};
-use image::{GenericImage, Rgba};
+pub use config::{Config, Resolution};
+use image::{GenericImage, GenericImageView, Rgba};
 use material::Material;
 use material::Material::{Lambertian, Metal};
 use nalgebra::{Point3, Vector3};
 use pbr::ProgressBar;
+use rand::prelude::SliceRandom;
 use rand::{thread_rng, Rng};
 use sphere::Sphere;
 use std::f64;
-use std::fs::File;
 use std::thread;
 
 const EARTH_RADIUS: f64 = 6.371e6;
@@ -56,14 +56,15 @@ fn random_scene(object_count: u32) -> Vec<Sphere> {
 
     for _ in 0..object_count {
         loop {
-            let x = rng.gen_range(-30., 30.);
-            let z = rng.gen_range(-60., 5.);
-            let radius = rng.gen_range(0.1, 0.5);
+            let x: f64 = rng.gen_range(-30.0..30.0);
+            let z: f64 = rng.gen_range(-60.0..5.0);
+            let radius: f64 = rng.gen_range(0.1..0.5);
 
             // Account for the curvature of the earth.
-            let sea_level = (ground.radius().powf(2.) - (x - ground.x()).powf(2.)
-                - (z - ground.z()).powf(2.))
-                .sqrt() + ground.y();
+            let sea_level =
+                (ground.radius().powf(2.) - (x - ground.x()).powf(2.) - (z - ground.z()).powf(2.))
+                    .sqrt()
+                    + ground.y();
             debug!("sea level: {}", sea_level);
 
             let y = sea_level + radius;
@@ -86,10 +87,10 @@ fn random_scene(object_count: u32) -> Vec<Sphere> {
 }
 
 /// Entry point for the application. Generates a hardcoded world, simulates the ray tracing and
-/// finally saves the rendered frame to disk, as specified by the `Configuration`.
-pub fn run(cfg: Configuration) {
+/// finally saves the rendered frame to disk, as specified by the `Config`.
+pub fn run(cfg: Config) {
     // Fail early in case of I/O errors.
-    let ref mut fout = File::create(&cfg.output_filename).unwrap();
+    // let mut ref fout = File::create(&cfg.output_filename).unwrap();
 
     let world = random_scene(500);
 
@@ -108,7 +109,7 @@ pub fn run(cfg: Configuration) {
     let camera = Camera::new(orientation, lens);
 
     let r = {
-        let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::async();
+        let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::r#async();
 
         let cfg = cfg.clone();
         thread::spawn(move || {
@@ -121,17 +122,16 @@ pub fn run(cfg: Configuration) {
             // Some areas of the image take more time to render. This makes the progress bar
             // advance unevenly. Shuffling the pixels leads to a more even distribution and a more
             // accurate ETA.
-            thread_rng().shuffle(&mut pixels);
-
+            pixels.shuffle(&mut thread_rng());
             pixels.into_iter().for_each(|pixel| s.send(pixel));
         });
         r
     };
 
-    let (ret_s, ret_r) = chan::async();
+    let (ret_s, ret_r) = chan::r#async();
     let wg = chan::WaitGroup::new();
 
-    for _ in 0..cfg.n_threads {
+    for _ in 0..cfg.threads {
         wg.add(1);
 
         let wg = wg.clone();
@@ -179,6 +179,6 @@ pub fn run(cfg: Configuration) {
     }
 
     wg.wait();
-    img.save(fout, image::PNG).unwrap();
+    img.save(cfg.output_filename).unwrap();
     pb.finish_print("Done!");
 }
