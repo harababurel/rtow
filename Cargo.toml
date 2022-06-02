@@ -10,10 +10,10 @@ license = "MIT"
 chan = "0.1.23"
 clap = { version = "3", features = ["derive", "yaml"]}
 image = "0.24"
+indicatif = {version = "*", features = ["rayon"]}
 log = "0.4.17"
 nalgebra = "0.31"
 num_cpus = "1.13"
-pbr = "1.0.4"
 pretty_env_logger = "0.4"
 rand = "0.8"
 regex = "1.5"

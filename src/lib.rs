@@ -3,7 +3,6 @@ extern crate image;
 #[macro_use]
 extern crate log;
 extern crate nalgebra;
-extern crate pbr;
 extern crate pretty_env_logger;
 extern crate rand;
 extern crate regex;
@@ -19,10 +18,10 @@ pub mod util;
 use camera::{Camera, Lens, Orientation};
 pub use config::{Config, Resolution};
 use image::{GenericImage, GenericImageView, Rgba};
+use indicatif::{ProgressBar, ProgressFinish, ProgressStyle};
 use material::Material;
 use material::Material::{Lambertian, Metal};
 use nalgebra::{Point3, Vector3};
-use pbr::ProgressBar;
 use rand::prelude::SliceRandom;
 use rand::{thread_rng, Rng};
 use sphere::Sphere;
@@ -172,13 +171,19 @@ pub fn run(cfg: Config) {
     drop(ret_s);
 
     let mut img = image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height);
-    let mut pb = ProgressBar::new((cfg.resolution.width * cfg.resolution.height).into());
+    let pb = ProgressBar::new((cfg.resolution.width * cfg.resolution.height).into());
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template(
+                "{spinner:.green} [{elapsed_precise}] [{wide_bar}] {pos}/{len} [{percent}%] [{per_sec}] [{eta_precise}]"
+            )
+            .progress_chars("##-")
+            .on_finish(ProgressFinish::AndLeave),
+    );
     for pixel in ret_r {
         img.put_pixel(pixel.0, pixel.1, pixel.2);
-        pb.inc();
+        pb.inc(1);
     }
-
     wg.wait();
     img.save(cfg.output_filename).unwrap();
-    pb.finish_print("Done!");
 }
