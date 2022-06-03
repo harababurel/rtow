@@ -13,19 +13,21 @@ pub struct Resolution {
 /// Describes the properties of the output image.
 ///
 /// * `resolution`: self explanatory
-/// * `n_samples`: the number of rays that are randomly sent through each pixel and then averaged
+/// * `samples`: the number of rays that are randomly sent through each pixel and then averaged
 /// together; a high number of samples provides more accurate colors, less noise and better
 /// anti-aliasing.
 /// * `output_filename`: self explanatory
 #[derive(Clone, Debug, Parser)]
 pub struct Config {
-    #[clap(long, default_value_t = Resolution::from_str("800x600").unwrap())]
+    #[clap(short, long, default_value_t = Resolution::from_str("1080p").unwrap())]
     pub resolution: Resolution,
-    #[clap(long, default_value_t = 10)]
-    pub n_samples: u32,
-    #[clap(long, default_value_t = String::from("out.png"))]
+    #[clap(long, default_value_t = 60.0)]
+    pub fov: f64,
+    #[clap(short, long, default_value_t = 10)]
+    pub samples: u32,
+    #[clap(short, long, default_value_t = String::from("out.png"))]
     pub output_filename: String,
-    #[clap(long, default_value_t = num_cpus::get())]
+    #[clap(short, long, default_value_t = num_cpus::get())]
     pub threads: usize,
 }
 
@@ -50,13 +52,33 @@ impl std::str::FromStr for Resolution {
     type Err = regex::Error;
 
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
-        let re = Regex::new(r"(\d+)[xX](\d+)")?;
-        let cap = re.captures(s).unwrap();
+        match s {
+            "720p" => Ok(Resolution {
+                width: 1280,
+                height: 720,
+            }),
+            "1080p" => Ok(Resolution {
+                width: 1920,
+                height: 1080,
+            }),
+            "4k" => Ok(Resolution {
+                width: 7680,
+                height: 4320,
+            }),
+            "8k" => Ok(Resolution {
+                width: 3840,
+                height: 2160,
+            }),
+            s_ => {
+                let re = Regex::new(r"(\d+)[xX](\d+)")?;
+                let cap = re.captures(s_).unwrap();
 
-        let width = cap[1].parse::<u32>().unwrap();
-        let height = cap[2].parse::<u32>().unwrap();
+                let width = cap[1].parse::<u32>().unwrap();
+                let height = cap[2].parse::<u32>().unwrap();
 
-        Ok(Resolution { width, height })
+                Ok(Resolution { width, height })
+            }
+        }
     }
 }
 

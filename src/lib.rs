@@ -88,11 +88,7 @@ fn random_scene(object_count: u32) -> Vec<Sphere> {
 /// Entry point for the application. Generates a hardcoded world, simulates the ray tracing and
 /// finally saves the rendered frame to disk, as specified by the `Config`.
 pub fn run(cfg: Config) {
-    // Fail early in case of I/O errors.
-    // let mut ref fout = File::create(&cfg.output_filename).unwrap();
-
     let world = random_scene(500);
-
     let orientation = Orientation {
         look_from: Point3::new(-2., 1.7, 0.),
         look_at: Point3::new(0., 1., -8.),
@@ -101,7 +97,7 @@ pub fn run(cfg: Config) {
     let lens = Lens {
         aperture: 0.1,
         focal_length: util::length(&(orientation.look_from - orientation.look_at)),
-        vertical_fov: 50.,
+        vertical_fov: cfg.fov,
         aspect_ratio: cfg.resolution.width as f64 / cfg.resolution.height as f64,
     };
 
@@ -111,19 +107,17 @@ pub fn run(cfg: Config) {
         let (s, r): (chan::Sender<_>, chan::Receiver<_>) = chan::r#async();
 
         let cfg = cfg.clone();
-        thread::spawn(move || {
-            let mut pixels: Vec<(u32, u32, image::Rgba<u8>)> =
-                image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height)
-                    .pixels()
-                    .into_iter()
-                    .collect();
+        let mut pixels: Vec<(u32, u32, image::Rgba<u8>)> =
+            image::DynamicImage::new_rgb8(cfg.resolution.width, cfg.resolution.height)
+                .pixels()
+                .into_iter()
+                .collect();
 
-            // Some areas of the image take more time to render. This makes the progress bar
-            // advance unevenly. Shuffling the pixels leads to a more even distribution and a more
-            // accurate ETA.
-            pixels.shuffle(&mut thread_rng());
-            pixels.into_iter().for_each(|pixel| s.send(pixel));
-        });
+        // Some areas of the image take more time to render. This makes the progress bar
+        // advance unevenly. Shuffling the pixels leads to a more even distribution and a more
+        // accurate ETA.
+        pixels.shuffle(&mut thread_rng());
+        pixels.into_iter().for_each(|pixel| s.send(pixel));
         r
     };
 
@@ -140,7 +134,7 @@ pub fn run(cfg: Config) {
         let ret_s = ret_s.clone();
         thread::spawn(move || {
             for pixel in r {
-                let mut color: Vector3<f64> = (0..cfg.n_samples)
+                let mut color: Vector3<f64> = (0..cfg.samples)
                     .into_iter()
                     .map(|_| {
                         let mut rng = thread_rng();
@@ -151,7 +145,7 @@ pub fn run(cfg: Config) {
                     })
                     .sum();
 
-                color /= cfg.n_samples as f64;
+                color /= cfg.samples as f64;
                 color.x = color.x.sqrt();
                 color.y = color.y.sqrt();
                 color.z = color.z.sqrt();
