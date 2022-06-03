@@ -62,12 +62,12 @@ impl std::str::FromStr for Resolution {
                 height: 1080,
             }),
             "4k" => Ok(Resolution {
-                width: 7680,
-                height: 4320,
-            }),
-            "8k" => Ok(Resolution {
                 width: 3840,
                 height: 2160,
+            }),
+            "8k" => Ok(Resolution {
+                width: 7680,
+                height: 4320,
             }),
             s_ => {
                 let re = Regex::new(r"(\d+)[xX](\d+)")?;
